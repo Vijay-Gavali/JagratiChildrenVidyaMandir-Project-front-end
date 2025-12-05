@@ -1,0 +1,197 @@
+/* AdminViewFees.css - date filter + table styling (matches attendance style) */
+
+.fees-container {
+    padding: 20px;
+    max-width: 820px;
+    margin: 0 20px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, "Noto Sans", sans-serif;
+    color: #222;
+}
+
+.fees-title {
+    margin: 0 0 12px 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.fees-search {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.fees-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.fees-btn {
+    padding: 10px 14px;
+    background: #ff9c00;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.fees-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.fees-btn:hover {
+    background-color: #0067d1;
+}
+
+.fees-error {
+    color: #b00020;
+    margin-bottom: 12px;
+}
+
+/* Date filter row */
+.fees-date-filter {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.date-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.date-field label {
+    font-size: 0.85rem;
+    color: #444;
+}
+
+.date-field input[type="date"] {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* Filter buttons */
+.filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.fees-filter-btn,
+.fees-clear-btn {
+    background: #ff9c00;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.fees-filter-btn:hover {
+    background: #0067d1;
+    color: #fff;
+}
+
+.fees-clear-btn {
+    background: #e0e0e0;
+    color: #333;
+}
+
+/* Results */
+.fees-results {
+    margin-top: 8px;
+}
+
+.fees-info {
+    color: #555;
+    padding: 12px;
+    background: #f8f8f8;
+    border-radius: 6px;
+}
+
+.fees-empty {
+    color: #666;
+    padding: 18px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    text-align: center;
+}
+
+/* Table wrapper */
+.fees-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    margin-top: 8px;
+}
+
+/* Table */
+.fees-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 360px;
+}
+
+.fees-table th,
+.fees-table td {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.fees-table thead th {
+    background: #f6f8fb;
+    font-weight: 600;
+}
+
+.fees-table tbody tr:hover {
+    background: #fbfcff;
+}
+
+/* status badges */
+.status-badge {
+    padding: 6px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.status-badge.paid {
+    background: #e6f4ea;
+    color: #2e7d32;
+}
+
+.status-badge.pending {
+    background: #fff7e6;
+    color: #7a5d00;
+}
+
+/* Responsive tweaks */
+@media (max-width: 520px) {
+    .fees-search {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fees-btn {
+        width: 100%;
+    }
+
+    .fees-date-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

@@ -1,0 +1,424 @@
+/* ViewStudentDetails.css */
+.vsd-container {
+    padding: 18px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color: #222;
+}
+
+.vsd-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.btn-primary1 {
+    background: #246bfd;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.btn-primary1:hover {
+    background: #1a5de8;
+}
+
+.btn-ghost1 {
+    background: #246bfd;
+    color: white;
+    border: 1px solid #e3e7f5;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.btn-ghost1:hover {
+    background: #1a5de8;
+
+}
+
+.btn-update {
+    background: #246bfd;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+    min-width: 100px;
+    /* Decreased from flex-grow: 1 */
+    max-width: 150px;
+    /* Optional: set max width */
+    justify-content: center;
+}
+
+.btn-update:hover:not(:disabled) {
+    background: #1a5de8;
+}
+
+.btn-update:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Card */
+.vsd-card {
+    background: white;
+    border: 1px solid #e6e9ef;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 6px 18px rgba(19, 30, 63, 0.04);
+}
+
+/* header */
+.vsd-header {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #eef2fb;
+}
+
+.vsd-photo img {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.vsd-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    background: #f3f7ff;
+    color: #123;
+    border: 1px solid #e6e9ef;
+}
+
+.vsd-meta .vsd-name {
+    margin: 0;
+    font-size: 1.45rem;
+    color: #1a1a1a;
+}
+
+.vsd-sub {
+    color: #444;
+    margin-top: 6px;
+    font-size: 0.95rem;
+}
+
+.vsd-sub strong {
+    color: #222;
+    font-weight: 600;
+}
+
+/* sections */
+.vsd-section {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid #eef2fb;
+}
+
+.vsd-section:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.vsd-section h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.05rem;
+    color: #222;
+    font-weight: 600;
+}
+
+/* details table */
+.vsd-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+}
+
+.vsd-table td {
+    padding: 10px 12px;
+    border-bottom: 1px dashed #eef2fb;
+    vertical-align: top;
+    font-size: 0.95rem;
+}
+
+.vsd-table tr:last-child td {
+    border-bottom: none;
+}
+
+.vsd-table td:first-child {
+    width: 190px;
+    color: #555;
+    font-weight: 600;
+    background: #f9fbfd;
+}
+
+.vsd-table td:last-child {
+    color: #333;
+}
+
+/* docs */
+.vsd-docs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vsd-doc {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fbfcff;
+    border: 1px solid #eef3ff;
+    transition: all 0.2s;
+}
+
+.vsd-doc:hover {
+    background: #f5f8ff;
+    border-color: #dbe4ff;
+}
+
+.vd-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vd-type {
+    font-weight: 700;
+    color: #246bfd;
+    font-size: 0.9rem;
+}
+
+.vd-name {
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.vd-time {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+/* loading and error states */
+.vsd-loading {
+    text-align: center;
+    padding: 40px;
+    color: #246bfd;
+}
+
+.vsd-error {
+    text-align: center;
+    padding: 40px;
+    color: #e74c3c;
+    background: #fdf2f2;
+    border-radius: 8px;
+    border-left: 4px solid #e74c3c;
+}
+
+.vsd-empty {
+    text-align: center;
+    padding: 30px;
+    color: #7f8c8d;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px dashed #e6e9ef;
+}
+
+/* print styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #print-area,
+    #print-area * {
+        visibility: visible;
+    }
+
+    #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+    }
+
+    .vsd-actions {
+        display: none !important;
+    }
+
+    .vsd-container {
+        padding: 0;
+    }
+
+    .vsd-card {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+    }
+}
+
+/* small screens */
+@media (max-width: 720px) {
+    .vsd-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .vsd-actions {
+        flex-direction: column;
+    }
+
+    .btn-ghost1,
+    .btn-update,
+    .btn-primary1 {
+        width: 100%;
+        justify-content: center;
+        min-width: unset;
+    }
+
+    .vsd-table {
+        font-size: 0.9rem;
+    }
+
+    .vsd-table td {
+        display: block;
+        width: 100%;
+        padding: 8px 10px;
+        border-bottom: 1px solid #eef2fb;
+    }
+
+    .vsd-table td:first-child {
+        width: 100%;
+        background: #f9fbfd;
+        border-bottom: none;
+        padding-bottom: 4px;
+        color: #246bfd;
+    }
+
+    .vsd-table td:last-child {
+        padding-top: 4px;
+        border-bottom: 2px solid #eef2fb;
+    }
+
+    .vsd-table tr:last-child td:last-child {
+        border-bottom: none;
+    }
+
+    .vsd-doc {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .vd-actions {
+        width: 100%;
+    }
+
+    .vd-actions .btn-ghost {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Add these styles to your AdminViewStudentDetails.css */
+
+.vd-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-ghost {
+    background-color: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+}
+
+.btn-ghost:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    color: #212529;
+}
+
+.btn-ghost-alt {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    min-width: 70px;
+}
+
+.btn-ghost-alt:hover {
+    background-color: #bbdefb;
+    border-color: #90caf9;
+}
+
+/* Print styles */
+@media print {
+    .vsd-actions {
+        display: none !important;
+    }
+
+    .vd-actions {
+        display: none !important;
+    }
+
+    .vsd-container {
+        padding: 0 !important;
+    }
+
+    .vsd-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+}
