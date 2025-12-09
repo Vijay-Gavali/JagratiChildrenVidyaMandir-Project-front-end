@@ -25,6 +25,8 @@ import AdminAddClass from "./AdminAddClass";
 import AdminUpdateClass from "./AdminUpdateClass";
 import AdminUploadExcel from "./AdminUploadExcel";
 import AdminNotice from "./AdminNotice";
+import AdminViewClassStudents from "./AdminViewClassStudents";
+import AdminStudentFeeDetails from "./AdminStudentFeeDetails";
 
 /* -------------------- Sidebar -------------------- */
 const Sidebar = () => {
@@ -153,6 +155,11 @@ const AdminDashboard = () => {
           // In your routing configuration
           <Route path="update-class" element={<AdminUpdateClass />} />
           <Route path="notice" element={<AdminNotice />} />
+          <Route path="fee-details" element={<AdminStudentFeeDetails />} />
+          <Route
+            path="view-class-student"
+            element={<AdminViewClassStudents />}
+          />
           <Route
             path=""
             element={

@@ -394,7 +394,7 @@ const AdminStudentRegistration = ({
             </label>
 
             <label>
-              SSM ID
+              SSSM ID
               <input name="ssmId" value={form.ssmId} onChange={handleChange} />
             </label>
           </div>

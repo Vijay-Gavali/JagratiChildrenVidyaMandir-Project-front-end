@@ -1,0 +1,381 @@
+/* Main Container */
+.admin-fee-details-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Header */
+.admin-fee-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+}
+
+.page-title {
+    color: #343a40;
+    font-size: 24px;
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Summary Stats */
+.summary-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-width: 120px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #343a40;
+}
+
+.stat-value.paid {
+    color: #28a745;
+}
+
+.stat-value.pending {
+    color: #dc3545;
+}
+
+/* Student Info Card */
+.student-info-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.info-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 16px;
+    color: #343a40;
+    font-weight: 600;
+}
+
+/* Error Message */
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+.error-message p {
+    margin: 0;
+}
+
+/* Fee Table Container */
+.fee-table-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* Loading State */
+.loading-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #6c757d;
+}
+
+.loading-state p {
+    margin: 0;
+}
+
+/* Empty State */
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.empty-state p {
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+/* Fee Table */
+.fee-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+.fee-table th {
+    background: #343a40;
+    color: white;
+    font-weight: 600;
+    padding: 15px;
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 2px solid #495057;
+}
+
+.fee-table td {
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 14px;
+}
+
+.fee-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.fee-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Amount Columns */
+.amount {
+    font-weight: 600;
+    color: #343a40;
+}
+
+.paid {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.remaining {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.paid {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.pending {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.partial {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Fee Actions */
+.fee-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mark-paid-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mark-paid-btn:hover {
+    background: #218838;
+}
+
+.add-payment-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.add-payment-btn:hover {
+    background: #0056b3;
+}
+
+/* Footer Summary */
+.fee-summary {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.summary-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.summary-label {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.summary-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #343a40;
+}
+
+.summary-value.fully-paid {
+    color: #28a745;
+}
+
+.summary-value.pending {
+    color: #dc3545;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .summary-stats {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .stat-item {
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-fee-details-container {
+        padding: 15px;
+    }
+
+    .admin-fee-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .page-title {
+        font-size: 20px;
+    }
+
+    .student-info-card {
+        grid-template-columns: 1fr;
+    }
+
+    .fee-table {
+        min-width: 800px;
+    }
+
+    .fee-actions {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .mark-paid-btn,
+    .add-payment-btn {
+        width: 100%;
+    }
+
+    .fee-summary {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .back-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

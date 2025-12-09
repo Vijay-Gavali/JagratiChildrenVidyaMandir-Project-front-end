@@ -4,8 +4,10 @@ import "./AdminViewStudents.css";
 
 const ViewStudents = () => {
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   // Fetch all classes
@@ -51,10 +53,15 @@ const ViewStudents = () => {
         if (!res.ok) throw new Error("Network response was not ok");
         return res.json();
       })
-      .then((data) => setStudents(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const studentsArray = Array.isArray(data) ? data : [];
+        setStudents(studentsArray);
+        setFilteredStudents(studentsArray);
+      })
       .catch((err) => {
         console.error("API Error:", err);
         setStudents([]);
+        setFilteredStudents([]);
       })
       .finally(() => setLoading(false));
   };
@@ -62,6 +69,23 @@ const ViewStudents = () => {
   useEffect(() => {
     loadStudents();
   }, []);
+
+  // Search functionality
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredStudents(students);
+    } else {
+      const term = searchTerm.toLowerCase();
+      const filtered = students.filter(
+        (student) =>
+          (student.name && student.name.toLowerCase().includes(term)) ||
+          (student.email && student.email.toLowerCase().includes(term)) ||
+          (student.studentPhone && student.studentPhone.includes(term)) ||
+          getClassName(student.studentClassId).toLowerCase().includes(term)
+      );
+      setFilteredStudents(filtered);
+    }
+  }, [searchTerm, students]);
 
   // ---------------- DELETE STUDENT HANDLER ----------------
   const deleteStudent = async (id) => {
@@ -85,10 +109,43 @@ const ViewStudents = () => {
     }
   };
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
   return (
     <div className="vs-container">
       <div className="vs-header">
         <h2 className="vs-title">All Students</h2>
+
+        {/* Search Bar in Middle */}
+        <div className="vs-search-bar">
+          <div className="vs-search-input-group">
+            <input
+              type="text"
+              className="vs-search-input"
+              placeholder="Search students..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+            <span className="vs-search-icon">🔍</span>
+            {searchTerm && (
+              <button className="vs-search-clear" onClick={clearSearch}>
+                ×
+              </button>
+            )}
+          </div>
+          {searchTerm && (
+            <div className="vs-search-count">
+              {filteredStudents.length} of {students.length} students
+            </div>
+          )}
+        </div>
+
         <div className="vs-header-buttons">
           <button
             className="vs-add-btn"
@@ -124,14 +181,16 @@ const ViewStudents = () => {
                   Loading...
                 </td>
               </tr>
-            ) : students.length === 0 ? (
+            ) : filteredStudents.length === 0 ? (
               <tr>
                 <td colSpan="8" className="vs-empty">
-                  No students found.
+                  {searchTerm
+                    ? `No students found matching "${searchTerm}"`
+                    : "No students found."}
                 </td>
               </tr>
             ) : (
-              students.map((s, index) => (
+              filteredStudents.map((s, index) => (
                 <tr key={s.userId}>
                   <td>{index + 1}</td>
                   <td>{s.name ?? "-"}</td>

@@ -9,14 +9,151 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
 
   const [user, setUser] = useState(null);
   const [docs, setDocs] = useState([]);
+  const [className, setClassName] = useState("");
+  const [studentPhotoUrl, setStudentPhotoUrl] = useState("");
   const [loadingUser, setLoadingUser] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [loadingClass, setLoadingClass] = useState(false);
+  const [loadingPhoto, setLoadingPhoto] = useState(false);
   const [error, setError] = useState(null);
+
+  // Fetch class name by ID
+  const fetchClassName = async (classId) => {
+    if (!classId) {
+      setClassName("Not Assigned");
+      return;
+    }
+
+    setLoadingClass(true);
+    try {
+      const res = await fetch(`${apiBase}/api/classes/getAll`);
+      if (res.ok) {
+        const classes = await res.json();
+        const classObj = Array.isArray(classes)
+          ? classes.find(
+              (c) =>
+                c.classId === classId ||
+                c.id === classId ||
+                String(c.classId) === String(classId) ||
+                String(c.id) === String(classId)
+            )
+          : null;
+
+        if (classObj) {
+          setClassName(
+            classObj.className || classObj.name || `Class ${classId}`
+          );
+        } else {
+          setClassName(`Class ${classId}`);
+        }
+      } else {
+        setClassName(`Class ${classId}`);
+      }
+    } catch (err) {
+      console.error("Failed to fetch class:", err);
+      setClassName(`Class ${classId}`);
+    } finally {
+      setLoadingClass(false);
+    }
+  };
+
+  // Fetch student photo using the download endpoint
+  const fetchStudentPhoto = async (userId) => {
+    if (!userId) return;
+
+    setLoadingPhoto(true);
+    try {
+      // Try different possible photo document types
+      const possibleTypes = [
+        "PHOTO",
+        "STUDENT_PHOTO",
+        "PROFILE_PHOTO",
+        "IMAGE",
+      ];
+
+      let photoFound = false;
+
+      for (const type of possibleTypes) {
+        try {
+          const response = await fetch(
+            `${apiBase}/api/documents/download/${userId}/${type}`,
+            {
+              method: "GET",
+            }
+          );
+
+          if (response.ok) {
+            // Create object URL from blob
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            setStudentPhotoUrl(objectUrl);
+            photoFound = true;
+            break;
+          }
+        } catch (err) {
+          console.log(`Photo type ${type} not found, trying next...`);
+          continue;
+        }
+      }
+
+      if (!photoFound) {
+        // Try to get photo from documents list
+        const docsRes = await fetch(`${apiBase}/api/documents/${userId}`);
+        if (docsRes.ok) {
+          const documents = await docsRes.json();
+          const photoDoc = documents.find(
+            (doc) =>
+              (doc.type &&
+                (doc.type.toUpperCase().includes("PHOTO") ||
+                  doc.type.toUpperCase().includes("IMAGE") ||
+                  doc.type.toUpperCase().includes("PROFILE"))) ||
+              (doc.endpoint &&
+                (doc.endpoint.toUpperCase().includes("PHOTO") ||
+                  doc.endpoint.toUpperCase().includes("IMAGE") ||
+                  doc.endpoint.toUpperCase().includes("PROFILE")))
+          );
+
+          if (photoDoc && photoDoc.url) {
+            setStudentPhotoUrl(photoDoc.url);
+          } else if (photoDoc) {
+            // Try to download the photo
+            try {
+              const photoResponse = await fetch(
+                `${apiBase}/api/documents/download/${userId}/${
+                  photoDoc.type || photoDoc.endpoint
+                }`
+              );
+              if (photoResponse.ok) {
+                const blob = await photoResponse.blob();
+                const objectUrl = URL.createObjectURL(blob);
+                setStudentPhotoUrl(objectUrl);
+              }
+            } catch (err) {
+              console.log("Could not download photo from document:", err);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching student photo:", err);
+    } finally {
+      setLoadingPhoto(false);
+    }
+  };
+
+  // Clean up object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (studentPhotoUrl && studentPhotoUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(studentPhotoUrl);
+      }
+    };
+  }, [studentPhotoUrl]);
 
   useEffect(() => {
     if (!studentId) return;
 
-    // fetch user
+    // Fetch user
     const fetchUser = async () => {
       setLoadingUser(true);
       setError(null);
@@ -33,6 +170,14 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
 
         const data = await res.json();
         setUser(data);
+
+        // Fetch class name after getting user data
+        if (data.studentClassId || data.studentClass) {
+          fetchClassName(data.studentClassId || data.studentClass);
+        }
+
+        // Fetch student photo
+        fetchStudentPhoto(studentId);
       } catch (err) {
         setError(err.message || "Failed to load student details");
       } finally {
@@ -40,7 +185,7 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
       }
     };
 
-    // fetch docs
+    // Fetch docs
     const fetchDocs = async () => {
       setLoadingDocs(true);
       try {
@@ -71,7 +216,7 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
     fetchDocs();
   }, [studentId, apiBase]);
 
-  // Download document using the specified API endpoint
+  // Download document
   const handleDownload = async (doc) => {
     try {
       const userId = studentId;
@@ -82,12 +227,9 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
         return;
       }
 
-      // Use the correct API endpoint format
       const downloadUrl = `${apiBase}/api/documents/download/${userId}/${encodeURIComponent(
         type
       )}`;
-
-      // Open in new tab for preview/download
       window.open(downloadUrl, "_blank");
     } catch (err) {
       console.error("Download error:", err);
@@ -96,7 +238,391 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
   };
 
   const printPage = () => {
-    window.print();
+    const printWindow = window.open("", "_blank", "width=900,height=650");
+
+    // Generate photo HTML for print
+    let photoHtml = "";
+    if (studentPhotoUrl) {
+      photoHtml = `<img src="${studentPhotoUrl}" alt="Student Photo" style="max-width: 150px; max-height: 150px; border: 1px solid #000;">`;
+    } else {
+      photoHtml = `<div style="width: 150px; height: 150px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: bold;">${
+        user?.name ? user.name.charAt(0).toUpperCase() : "?"
+      }</div>`;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Student Details - ${user?.name || "Student"}</title>
+        <style>
+          @page {
+            margin: 15mm;
+          }
+          body {
+            font-family: 'Times New Roman', serif;
+            margin: 0;
+            padding: 0;
+            color: #000;
+            background: white;
+            font-size: 12pt;
+            line-height: 1.5;
+          }
+          .print-container {
+            max-width: 210mm;
+            margin: 0 auto;
+          }
+          
+          /* School Header */
+          .school-header {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .school-name {
+            font-size: 24pt;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+          }
+          .school-address {
+            font-size: 11pt;
+            margin: 0 0 10px 0;
+            color: #666;
+          }
+          .print-title {
+            font-size: 18pt;
+            margin: 15px 0;
+            text-decoration: underline;
+            font-weight: bold;
+          }
+          
+          /* Student Header with Photo */
+          .student-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #000;
+          }
+          .student-photo-section {
+            text-align: center;
+          }
+          .photo-label {
+            font-size: 10pt;
+            margin-top: 5px;
+            color: #666;
+          }
+          .student-info-section {
+            flex: 1;
+            margin-left: 30px;
+          }
+          .basic-info-row {
+            display: flex;
+            margin-bottom: 10px;
+          }
+          .basic-info-label {
+            width: 150px;
+            font-weight: bold;
+          }
+          .basic-info-value {
+            flex: 1;
+          }
+          
+          /* Details Section */
+          .details-section {
+            margin: 20px 0;
+            page-break-inside: avoid;
+          }
+          .section-title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #000;
+          }
+          
+          /* Details Table */
+          .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+          }
+          .details-table td {
+            padding: 8px 10px;
+            border: 1px solid #000;
+            vertical-align: top;
+          }
+          .field-label {
+            font-weight: bold;
+            width: 35%;
+            background: #f5f5f5;
+          }
+          .field-value {
+            width: 65%;
+          }
+          
+          /* Address Section */
+          .address-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #000;
+            background: #f9f9f9;
+          }
+          .address-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+          .address-content {
+            white-space: pre-line;
+            min-height: 60px;
+          }
+          
+          /* Documents Section */
+          .documents-section {
+            margin-top: 25px;
+            page-break-before: always;
+          }
+          .documents-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+          }
+          .documents-table th,
+          .documents-table td {
+            padding: 8px;
+            border: 1px solid #000;
+            text-align: left;
+          }
+          .documents-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+          }
+          
+          /* Footer */
+          .print-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+          .signature-section {
+            text-align: center;
+            width: 250px;
+          }
+          .signature-line {
+            width: 200px;
+            height: 1px;
+            border-bottom: 1px solid #000;
+            margin: 0 auto 5px;
+          }
+          .print-date {
+            font-size: 10pt;
+            color: #666;
+            text-align: right;
+          }
+          
+          /* Print Controls */
+          @media print {
+            body {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .no-print {
+              display: none;
+            }
+            .print-container {
+              padding: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-container">
+          <!-- School Header -->
+          <div class="school-header">
+            <h1 class="school-name">JAGRATI CHILDREN VIDHYA MANDIR</h1>
+            <p class="school-address">Official Student Record Document</p>
+            <h2 class="print-title">STUDENT DETAILS</h2>
+          </div>
+          
+          <!-- Student Header with Photo -->
+          <div class="student-header">
+            <div class="student-photo-section">
+              ${photoHtml}
+              <div class="photo-label">Student Photo</div>
+            </div>
+            <div class="student-info-section">
+              <div class="basic-info-row">
+                <div class="basic-info-label">Student Name:</div>
+                <div class="basic-info-value"><strong>${
+                  user?.name || "—"
+                }</strong></div>
+              </div>
+              <div class="basic-info-row">
+                <div class="basic-info-label">Admission No:</div>
+                <div class="basic-info-value">${user?.admissionNo || "—"}</div>
+              </div>
+              <div class="basic-info-row">
+                <div class="basic-info-label">Student ID:</div>
+                <div class="basic-info-value">${studentId}</div>
+              </div>
+              <div class="basic-info-row">
+                <div class="basic-info-label">Class:</div>
+                <div class="basic-info-value">${
+                  className || "Not Assigned"
+                }</div>
+              </div>
+              <div class="basic-info-row">
+                <div class="basic-info-label">Admission Date:</div>
+                <div class="basic-info-value">${
+                  user?.admissionDate || "—"
+                }</div>
+              </div>
+              <div class="basic-info-row">
+                <div class="basic-info-label">Date of Birth:</div>
+                <div class="basic-info-value">${user?.dob || "—"}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Student Details Table -->
+          <div class="details-section">
+            <h3 class="section-title">Student Information</h3>
+            <table class="details-table">
+              <tr>
+                <td class="field-label">Gender</td>
+                <td class="field-value">${user?.gender || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">Student Phone</td>
+                <td class="field-value">${user?.studentPhone || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">Email</td>
+                <td class="field-value">${user?.email || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">Student Aadhar No</td>
+                <td class="field-value">${user?.studentAadharNo || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">RTE Status</td>
+                <td class="field-value">${user?.rte || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">SSM ID</td>
+                <td class="field-value">${user?.ssmId || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">Passout Class</td>
+                <td class="field-value">${user?.passoutClass || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">TC Number</td>
+                <td class="field-value">${user?.tcNumber || "—"}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <!-- Parent Information -->
+          <div class="details-section">
+            <h3 class="section-title">Parent/Guardian Information</h3>
+            <table class="details-table">
+              <tr>
+                <td class="field-label">Father's Name</td>
+                <td class="field-value">${user?.fatherName || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">Mother's Name</td>
+                <td class="field-value">${user?.motherName || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">Parent Phone</td>
+                <td class="field-value">${user?.parentPhone || "—"}</td>
+              </tr>
+              <tr>
+                <td class="field-label">Parent Aadhar No</td>
+                <td class="field-value">${user?.parentAadharNo || "—"}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <!-- Address Information -->
+          <div class="address-section">
+            <div class="address-title">Address:</div>
+            <div class="address-content">${user?.address || "—"}</div>
+          </div>
+          
+          <!-- Documents Information -->
+          ${
+            docs && docs.length > 0
+              ? `
+          <div class="documents-section">
+            <h3 class="section-title">Uploaded Documents</h3>
+            <table class="documents-table">
+              <thead>
+                <tr>
+                  <th width="30%">Document Type</th>
+                  <th width="50%">File Name</th>
+                  <th width="20%">Upload Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${docs
+                  .map(
+                    (doc) => `
+                  <tr>
+                    <td>${doc.type || doc.endpoint || "Document"}</td>
+                    <td>${doc.fileName || doc.originalName || "-"}</td>
+                    <td>${
+                      doc.uploadedAt
+                        ? new Date(doc.uploadedAt).toLocaleDateString()
+                        : "-"
+                    }</td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+          `
+              : ""
+          }
+          
+          <!-- Footer -->
+          <div class="print-footer">
+            <div class="print-date">
+              <strong>Printed on:</strong> ${new Date().toLocaleDateString(
+                "en-IN",
+                {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }
+              )}
+            </div>
+            <div class="signature-section">
+              <div class="signature-line"></div>
+              <div>Authorized Signature</div>
+              <div>(School Authority)</div>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   const handleUpdate = () => {
@@ -106,7 +632,6 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
     });
   };
 
-  // Handle back to student list
   const handleBackToList = () => {
     navigate("/admindashboard/view-students");
   };
@@ -128,24 +653,26 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
   return (
     <div className="vsd-container">
       <div className="vsd-actions">
-        <button className="btn-ghost1" onClick={handleBackToList}>
+        <button className="btn-ghost" onClick={handleBackToList}>
           ← Back to Student List
         </button>
 
-        <button
-          className="btn-update"
-          onClick={handleUpdate}
-          disabled={loadingUser || !user}
-        >
-          Update Student
-        </button>
+        <div className="vsd-action-buttons">
+          <button
+            className="btn-update"
+            onClick={handleUpdate}
+            disabled={loadingUser || !user}
+          >
+            Update Student
+          </button>
 
-        <button className="btn-primary1" onClick={printPage} disabled={!user}>
-          🖨️ Print
-        </button>
+          <button className="btn-print" onClick={printPage} disabled={!user}>
+            🖨️ Print Details
+          </button>
+        </div>
       </div>
 
-      <div className="vsd-card" id="print-area">
+      <div className="vsd-card" id="printable-content">
         {loadingUser ? (
           <div className="vsd-loading">
             <div className="loading-spinner"></div>
@@ -177,166 +704,221 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
           </div>
         ) : (
           <>
-            <header className="vsd-header">
-              <div className="vsd-photo">
-                {/* show photo if available in docs */}
-                {docs &&
-                  docs.length > 0 &&
-                  (() => {
-                    const photo = docs.find(
-                      (d) =>
-                        (d.type || "").toUpperCase().includes("PHOTO") ||
-                        (d.endpoint || "").toUpperCase().includes("PHOTO")
-                    );
-                    return photo && photo.url ? (
-                      <img src={photo.url} alt="student" />
-                    ) : (
-                      <div className="vsd-avatar">
-                        {(user.name || "?").slice(0, 1).toUpperCase()}
-                      </div>
-                    );
-                  })()}
+            {/* Header Section with Photo and Basic Info */}
+            <div className="vsd-header-section">
+              <div className="vsd-photo-container">
+                {loadingPhoto ? (
+                  <div className="vsd-photo-loading">
+                    <div className="loading-spinner-small"></div>
+                  </div>
+                ) : studentPhotoUrl ? (
+                  <img
+                    src={studentPhotoUrl}
+                    alt="student"
+                    className="vsd-photo-img"
+                  />
+                ) : (
+                  <div className="vsd-photo-placeholder">
+                    <span className="vsd-photo-initial">
+                      {(user.name || "?").slice(0, 1).toUpperCase()}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <div className="vsd-meta">
-                <h2 className="vsd-name">{user.name || "—"}</h2>
-                <div className="vsd-sub">
-                  Admission No: <strong>{user.admissionNo || "—"}</strong>
-                </div>
-                <div className="vsd-sub">
-                  Class:{" "}
-                  <strong>
-                    {user.studentClass || user.studentClassId || "—"}
-                  </strong>
-                </div>
-                <div className="vsd-sub">
-                  Student ID: <strong>{studentId}</strong>
+              <div className="vsd-header-info">
+                <h1 className="vsd-student-name">{user.name || "—"}</h1>
+                <div className="vsd-header-grid">
+                  <div className="vsd-header-item">
+                    <span className="vsd-header-label">Admission No:</span>
+                    <span className="vsd-header-value">
+                      {user.admissionNo || "—"}
+                    </span>
+                  </div>
+                  <div className="vsd-header-item">
+                    <span className="vsd-header-label">Student ID:</span>
+                    <span className="vsd-header-value">{studentId}</span>
+                  </div>
+                  <div className="vsd-header-item">
+                    <span className="vsd-header-label">Class:</span>
+                    <span className="vsd-header-value">
+                      {loadingClass
+                        ? "Loading..."
+                        : className || "Not Assigned"}
+                    </span>
+                  </div>
+                  <div className="vsd-header-item">
+                    <span className="vsd-header-label">Admission Date:</span>
+                    <span className="vsd-header-value">
+                      {user.admissionDate || "—"}
+                    </span>
+                  </div>
+                  <div className="vsd-header-item">
+                    <span className="vsd-header-label">Phone:</span>
+                    <span className="vsd-header-value">
+                      {user.studentPhone || "—"}
+                    </span>
+                  </div>
+                  <div className="vsd-header-item">
+                    <span className="vsd-header-label">Email:</span>
+                    <span className="vsd-header-value">
+                      {user.email || "—"}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </header>
+            </div>
 
-            <section className="vsd-section">
-              <h3>Registration Details</h3>
-              <table className="vsd-table">
-                <tbody>
-                  <tr>
-                    <td>Full name</td>
-                    <td>{user.name || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Admission No</td>
-                    <td>{user.admissionNo || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Admission Date</td>
-                    <td>{user.admissionDate || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>DOB</td>
-                    <td>{user.dob || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Gender</td>
-                    <td>{user.gender || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Phone</td>
-                    <td>{user.studentPhone || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Email</td>
-                    <td>{user.email || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Father</td>
-                    <td>{user.fatherName || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Mother</td>
-                    <td>{user.motherName || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Parent phone</td>
-                    <td>{user.parentPhone || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Address</td>
-                    <td>{user.address || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Student Aadhar</td>
-                    <td>{user.studentAadharNo || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Parent Aadhar</td>
-                    <td>{user.parentAadharNo || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>RTE</td>
-                    <td>{user.rte || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>TC Number</td>
-                    <td>{user.tcNumber || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>SSM ID</td>
-                    <td>{user.ssmId || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>Passout Class</td>
-                    <td>{user.passoutClass || "-"}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
+            {/* Main Content Grid */}
+            <div className="vsd-content-grid">
+              {/* Left Column - Personal Information */}
+              <div className="vsd-info-section">
+                <h2 className="vsd-section-title">
+                  <span className="vsd-title-icon">👤</span>
+                  Personal Information
+                </h2>
+                <div className="vsd-info-grid">
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">Date of Birth</span>
+                    <span className="vsd-info-value">{user.dob || "-"}</span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">Gender</span>
+                    <span className="vsd-info-value">{user.gender || "-"}</span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">Student Aadhar</span>
+                    <span className="vsd-info-value">
+                      {user.studentAadharNo || "-"}
+                    </span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">RTE Status</span>
+                    <span className="vsd-info-value">{user.rte || "-"}</span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">SSM ID</span>
+                    <span className="vsd-info-value">{user.ssmId || "-"}</span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">Passout Class</span>
+                    <span className="vsd-info-value">
+                      {user.passoutClass || "-"}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-            <section className="vsd-section">
-              <h3>Uploaded Documents {loadingDocs && "(loading...)"}</h3>
+              {/* Middle Column - Parent Information */}
+              <div className="vsd-info-section">
+                <h2 className="vsd-section-title">
+                  <span className="vsd-title-icon">👨‍👩‍👧‍👦</span>
+                  Parent Information
+                </h2>
+                <div className="vsd-info-grid">
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">Father's Name</span>
+                    <span className="vsd-info-value">
+                      {user.fatherName || "-"}
+                    </span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">Mother's Name</span>
+                    <span className="vsd-info-value">
+                      {user.motherName || "-"}
+                    </span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">Parent Phone</span>
+                    <span className="vsd-info-value">
+                      {user.parentPhone || "-"}
+                    </span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">Parent Aadhar</span>
+                    <span className="vsd-info-value">
+                      {user.parentAadharNo || "-"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Additional Information */}
+              <div className="vsd-info-section">
+                <h2 className="vsd-section-title">
+                  <span className="vsd-title-icon">🏠</span>
+                  Address & Other Details
+                </h2>
+                <div className="vsd-info-grid">
+                  <div className="vsd-info-item vsd-address-item">
+                    <span className="vsd-info-label">Address</span>
+                    <span className="vsd-info-value">
+                      {user.address || "-"}
+                    </span>
+                  </div>
+                  <div className="vsd-info-item">
+                    <span className="vsd-info-label">TC Number</span>
+                    <span className="vsd-info-value">
+                      {user.tcNumber || "-"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Documents Section */}
+            <div className="vsd-documents-section">
+              <h2 className="vsd-section-title">
+                <span className="vsd-title-icon">📄</span>
+                Uploaded Documents
+                {loadingDocs && (
+                  <span className="vsd-loading-text"> (loading...)</span>
+                )}
+              </h2>
 
               {loadingDocs ? (
-                <div className="vsd-loading">
+                <div className="vsd-loading-small">
                   <div className="loading-spinner-small"></div>
                   <p>Loading documents...</p>
                 </div>
               ) : !docs || docs.length === 0 ? (
-                <div className="vsd-empty">
+                <div className="vsd-empty-docs">
                   <p>No documents uploaded for this student.</p>
                 </div>
               ) : (
-                <div className="vsd-docs">
+                <div className="vsd-documents-grid">
                   {docs.map((d) => (
                     <div
-                      className="vsd-doc"
+                      className="vsd-document-card"
                       key={d.documentId ?? d.id ?? d.fileName}
                     >
-                      <div className="vd-left">
-                        <div className="vd-type">
+                      <div className="vsd-document-icon">📎</div>
+                      <div className="vsd-document-content">
+                        <div className="vsd-document-type">
                           {d.type || d.endpoint || "Document"}
                         </div>
-                        <div className="vd-name">
+                        <div className="vsd-document-name">
                           {d.fileName || d.originalName || "-"}
                         </div>
-                        <div className="vd-time">
+                        <div className="vsd-document-time">
                           {d.uploadedAt
-                            ? new Date(d.uploadedAt).toLocaleString()
+                            ? new Date(d.uploadedAt).toLocaleDateString()
                             : ""}
                         </div>
                       </div>
-
-                      <div className="vd-actions">
+                      <div className="vsd-document-actions">
                         {d.url ? (
                           <a
-                            className="btn-ghost"
+                            className="vsd-doc-btn"
                             href={d.url}
                             target="_blank"
                             rel="noreferrer"
                           >
-                            Open
+                            View
                           </a>
                         ) : (
                           <button
-                            className="btn-ghost"
+                            className="vsd-doc-btn"
                             onClick={() => handleDownload(d)}
                             title={`Download ${
                               d.type || d.endpoint || "document"
@@ -350,7 +932,7 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
                   ))}
                 </div>
               )}
-            </section>
+            </div>
           </>
         )}
       </div>
