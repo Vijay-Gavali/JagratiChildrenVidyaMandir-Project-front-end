@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from "react";
+// AdminNotice.jsx
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import "./AdminNotice.css";
+import { SessionContext } from "./SessionContext"; // adjust path if needed
 
 const AdminNotice = () => {
+  const navigate = useNavigate();
+  const { selectedSession } = useContext(
+    SessionContext || { selectedSession: null }
+  );
+
   const [notices, setNotices] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Notice form state
   const [noticeData, setNoticeData] = useState({
-    noticeId: null, // Changed from 'id' to 'noticeId'
+    noticeId: null,
     title: "",
     subject: "",
     message: "",
@@ -16,104 +23,81 @@ const AdminNotice = () => {
     issuedBy: "",
   });
 
-  // Set your API base URL
   const API_BASE = "http://localhost:8080/api/notices";
 
-  // --- Helpers for date handling ---
-
-  // For <input type="date"> → must be YYYY-MM-DD
+  // Date helpers
   const normalizeDateForInput = (value) => {
     if (!value) return "";
-    // if backend returns "2025-12-08T00:00:00" or ISO string
-    if (typeof value === "string" && value.includes("T")) {
+    if (typeof value === "string" && value.includes("T"))
       return value.split("T")[0];
-    }
-    // assume already YYYY-MM-DD
     return value;
   };
 
-  // For API (LocalDate) → also YYYY-MM-DD
   const normalizeDateForApi = (value) => {
     if (!value) return null;
-    if (value.includes("T")) {
-      return value.split("T")[0];
-    }
+    if (value.includes("T")) return value.split("T")[0];
     return value;
   };
 
-  // Load all notices on mount
+  // Load notices for selected session
   useEffect(() => {
     const fetchNotices = async () => {
-      try {
-        setLoading(true);
-        console.log("Fetching notices from:", API_BASE);
+      if (!selectedSession || !selectedSession.id) {
+        setNotices([]);
+        return;
+      }
 
-        const response = await fetch(API_BASE, {
+      setLoading(true);
+      try {
+        const sessionId = selectedSession.id;
+        const url = `${API_BASE}/${sessionId}/getAllUsingSessionId`;
+        const response = await fetch(url, {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers: { Accept: "application/json" },
         });
 
         if (!response.ok) {
+          const text = await response.text().catch(() => "");
           throw new Error(
-            `Failed to fetch notices: ${response.status} ${response.statusText}`
+            `Failed to load notices (${response.status}) ${text}`
           );
         }
 
         const data = await response.json();
-        console.log("Received data:", data);
-
-        // Handle different response formats
+        // support array or wrapped responses
         let noticesList = [];
-
-        if (Array.isArray(data)) {
-          noticesList = data;
-        } else if (data && Array.isArray(data.content)) {
-          // Spring Boot Pageable response
+        if (Array.isArray(data)) noticesList = data;
+        else if (data && Array.isArray(data.content))
           noticesList = data.content;
-        } else if (data && data.data && Array.isArray(data.data)) {
-          // Some APIs wrap in data object
+        else if (data && data.data && Array.isArray(data.data))
           noticesList = data.data;
-        } else if (data && typeof data === "object") {
-          // Try to extract array from object
-          const values = Object.values(data);
-          if (Array.isArray(values[0])) {
-            noticesList = values[0];
-          }
+        else if (data && typeof data === "object") {
+          const vals = Object.values(data);
+          if (Array.isArray(vals[0])) noticesList = vals[0];
         }
 
-        // Ensure we have an array
-        if (!Array.isArray(noticesList)) {
-          noticesList = [];
-        }
-
-        setNotices(noticesList);
-      } catch (error) {
-        console.error("Error fetching notices:", error);
-        alert(`Error loading notices: ${error.message}`);
-        setNotices([]); // Set empty array on error
+        setNotices(Array.isArray(noticesList) ? noticesList : []);
+      } catch (err) {
+        console.error("Error fetching notices:", err);
+        alert(`Error loading notices: ${err.message}`);
+        setNotices([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchNotices();
-  }, []);
+  }, [selectedSession]);
 
-  // Handle input change
+  // Input handling
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNoticeData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setNoticeData((prev) => ({ ...prev, [name]: value }));
   };
 
   const resetForm = () => {
     setNoticeData({
-      noticeId: null, // Changed from 'id'
+      noticeId: null,
       title: "",
       subject: "",
       message: "",
@@ -122,11 +106,17 @@ const AdminNotice = () => {
     });
   };
 
-  // Handle form submit (Create / Update)
+  // Create / Update
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedSession || !selectedSession.id) {
+      alert(
+        "Please select a session from the dashboard before creating a notice."
+      );
+      return;
+    }
 
-    // Validate form (subject is required as per nullable = false)
+    // basic validation
     if (
       !noticeData.title ||
       !noticeData.subject ||
@@ -138,138 +128,97 @@ const AdminNotice = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-
+      const sessionId = selectedSession.id;
       const { noticeId, ...rest } = noticeData;
-
-      // Ensure date sent to API is YYYY-MM-DD
-      const payload = {
-        ...rest,
-        date: normalizeDateForApi(rest.date),
-      };
-
-      console.log("Submitting payload:", payload);
-      console.log("noticeId:", noticeId);
+      const payload = { ...rest, date: normalizeDateForApi(rest.date) };
 
       if (!noticeId) {
-        // CREATE – POST /api/notices
-        const response = await fetch(API_BASE, {
+        // create
+        const url = `${API_BASE}/${sessionId}/save`;
+        const res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
           },
           body: JSON.stringify(payload),
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Create error response:", response.status, errorText);
-          throw new Error(`Failed to create notice: ${response.status}`);
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(txt || `Create failed: ${res.status}`);
         }
 
-        const savedNotice = await response.json();
-        console.log("Created notice:", savedNotice);
-        setNotices((prev) => [savedNotice, ...prev]);
+        const saved = await res.json().catch(() => null);
+        setNotices((prev) => [saved || payload, ...prev]);
         alert("Notice created successfully!");
       } else {
-        // UPDATE – PUT /api/notices/{noticeId}
-        // Convert noticeId to integer
+        // update (PUT /api/notices/{id})
         const id = parseInt(noticeId, 10);
-        if (isNaN(id)) {
-          throw new Error("Invalid notice ID");
-        }
+        if (isNaN(id)) throw new Error("Invalid notice ID");
+        const updatePayload = { noticeId: id, ...payload };
 
-        const updatePayload = {
-          noticeId: id, // Include noticeId in payload
-          ...payload,
-        };
-
-        console.log("Updating notice with ID:", id);
-        console.log("Update payload:", updatePayload);
-
-        const response = await fetch(`${API_BASE}/${id}`, {
+        const res = await fetch(`${API_BASE}/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
           },
           body: JSON.stringify(updatePayload),
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Update error response:", response.status, errorText);
-          throw new Error(`Failed to update notice: ${response.status}`);
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(txt || `Update failed: ${res.status}`);
         }
 
-        const updatedNotice = await response.json();
-        console.log("Updated notice:", updatedNotice);
+        const updated = await res.json().catch(() => null);
         setNotices((prev) =>
-          prev.map((n) =>
-            n.noticeId === updatedNotice.noticeId ? updatedNotice : n
-          )
+          prev.map((n) => (n.noticeId === updated.noticeId ? updated : n))
         );
         alert("Notice updated successfully!");
       }
 
       resetForm();
       setShowForm(false);
-    } catch (error) {
-      console.error("Submit error:", error);
-      alert(error.message || "Something went wrong while saving notice.");
+    } catch (err) {
+      console.error("Save error:", err);
+      alert(err.message || "Error saving notice");
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete notice – DELETE /api/notices/{noticeId}
+  // Delete
   const deleteNotice = async (noticeId) => {
     if (!window.confirm("Are you sure you want to delete this notice?")) return;
-
+    setLoading(true);
     try {
-      setLoading(true);
-
-      // Convert noticeId to integer
       const id = parseInt(noticeId, 10);
-      if (isNaN(id)) {
-        throw new Error("Invalid notice ID");
+      if (isNaN(id)) throw new Error("Invalid notice ID");
+
+      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Delete failed: ${res.status}`);
       }
 
-      console.log("Deleting notice with ID:", id);
-
-      const response = await fetch(`${API_BASE}/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Notice not found (already deleted?)");
-        }
-        const errorText = await response.text();
-        console.error("Delete error response:", response.status, errorText);
-        throw new Error(`Failed to delete notice: ${response.status}`);
-      }
-
-      setNotices((prev) =>
-        prev.filter((notice) => notice.noticeId !== noticeId)
-      );
+      setNotices((prev) => prev.filter((n) => n.noticeId !== noticeId));
       alert("Notice deleted successfully!");
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert(error.message || "Something went wrong while deleting notice.");
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert(err.message || "Error deleting notice");
     } finally {
       setLoading(false);
     }
   };
 
-  // Edit notice – open modal with existing data
+  // Edit: populate form
   const editNotice = (notice) => {
-    console.log("Editing notice:", notice);
     setNoticeData({
-      noticeId: notice.noticeId, // Changed from 'id'
+      noticeId: notice.noticeId,
       title: notice.title || "",
       subject: notice.subject || "",
       message: notice.message || "",
@@ -279,170 +228,80 @@ const AdminNotice = () => {
     setShowForm(true);
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "";
     try {
       const normalized = normalizeDateForInput(dateString);
       const options = { year: "numeric", month: "long", day: "numeric" };
       return new Date(normalized).toLocaleDateString("en-US", options);
-    } catch (error) {
+    } catch {
       return dateString;
     }
   };
 
-  // Print notice
   const printNotice = (notice) => {
     const printWindow = window.open("", "_blank", "width=800,height=600");
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${notice.title} - Notice</title>
-        <style>
-          @page {
-            margin: 20mm;
-          }
-          body {
-            font-family: 'Times New Roman', Times, serif;
-            margin: 0;
-            padding: 0;
-            background: white;
-          }
-          .print-container {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 auto;
-            padding: 20mm;
-            box-sizing: border-box;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-          }
-          .school-name {
-            font-size: 28pt;
-            font-weight: bold;
-            margin: 0;
-            text-transform: uppercase;
-          }
-          .notice-label {
-            font-size: 22pt;
-            margin: 10px 0 20px 0;
-            color: #333;
-            border-bottom: 3px double #000;
-            padding-bottom: 15px;
-          }
-          .notice-content {
-            margin-top: 30px;
-          }
-          .notice-meta {
-            margin-bottom: 25px;
-            font-size: 12pt;
-          }
-          .notice-meta p {
-            margin: 8px 0;
-          }
-          .notice-title {
-            text-align: center;
-            font-size: 18pt;
-            text-decoration: underline;
-            margin: 30px 0;
-          }
-          .notice-body {
-            font-size: 12pt;
-            line-height: 1.8;
-            text-align: justify;
-            margin: 30px 0;
-            white-space: pre-wrap;
-          }
-          .footer {
-            margin-top: 80px;
-            display: flex;
-            justify-content: space-between;
-          }
-          .issued-by {
-            font-size: 12pt;
-          }
-          .signature {
-            text-align: center;
-          }
-          .signature-line {
-            width: 200px;
-            height: 1px;
-            border-bottom: 1px solid #000;
-            margin: 0 auto 5px;
-          }
-          .print-date {
-            text-align: right;
-            margin-top: 10px;
-            font-size: 10pt;
-            color: #666;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="print-container">
-          <div class="header">
-            <h1 class="school-name">JAGRATI CHILDREN VIDHYA MANDIR</h1>
-            <h2 class="notice-label">OFFICIAL NOTICE</h2>
-          </div>
-          
-          <div class="notice-content">
-            <div class="notice-meta">
-              <p><strong>Date:</strong> ${formatDate(notice.date)}</p>
-              ${
-                notice.subject
-                  ? `<p><strong>Subject:</strong> ${notice.subject}</p>`
-                  : ""
-              }
-            </div>
-            
-            <h3 class="notice-title">${notice.title}</h3>
-            
-            <div class="notice-body">
-              ${(notice.message || "").replace(/\n/g, "<br>")}
-            </div>
-            
-            <div class="footer">
-              <div class="issued-by">
-                <p><strong>Issued By:</strong></p>
-                <p>${notice.issuedBy || ""}</p>
-                <p>${formatDate(notice.date)}</p>
-              </div>
-              
-              <div class="signature">
-                <div class="signature-line"></div>
-                <p>Authorized Signature</p>
-              </div>
-            </div>
-            
-            <div class="print-date">
-              Printed on: ${new Date().toLocaleDateString()}
-            </div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `);
-
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>${
+      notice.title
+    }</title><style>
+      @page{margin:20mm}body{font-family:Times,serif;margin:0;padding:0;background:white}
+      .print-container{width:210mm;min-height:297mm;margin:0 auto;padding:20mm;box-sizing:border-box}
+      .header{text-align:center;margin-bottom:30px}.school-name{font-size:28pt;font-weight:700;margin:0;text-transform:uppercase}
+      .notice-label{font-size:22pt;margin:10px 0 20px;color:#333;border-bottom:3px double #000;padding-bottom:15px}
+      .notice-title{text-align:center;font-size:18pt;text-decoration:underline;margin:30px 0}
+      .notice-body{font-size:12pt;line-height:1.8;text-align:justify;margin:30px 0;white-space:pre-wrap}
+      .footer{margin-top:80px;display:flex;justify-content:space-between}.signature-line{width:200px;height:1px;border-bottom:1px solid #000;margin:0 auto 5px}
+      .print-date{text-align:right;margin-top:10px;font-size:10pt;color:#666}
+      </style></head><body>
+      <div class="print-container"><div class="header"><h1 class="school-name">JAGRATI CHILDREN VIDHYA MANDIR</h1><h2 class="notice-label">OFFICIAL NOTICE</h2></div>
+      <div class="notice-content"><div class="notice-meta"><p><strong>Date:</strong> ${formatDate(
+        notice.date
+      )}</p>${
+      notice.subject ? `<p><strong>Subject:</strong> ${notice.subject}</p>` : ""
+    }</div>
+      <h3 class="notice-title">${notice.title}</h3><div class="notice-body">${(
+      notice.message || ""
+    ).replace(/\n/g, "<br>")}</div>
+      <div class="footer"><div class="issued-by"><p><strong>Issued By:</strong></p><p>${
+        notice.issuedBy || ""
+      }</p><p>${formatDate(notice.date)}</p></div>
+      <div class="signature"><div class="signature-line"></div><p>Authorized Signature</p></div></div><div class="print-date">Printed on: ${new Date().toLocaleDateString()}</div></div></div>
+      </body></html>`);
     printWindow.document.close();
-
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
     }, 500);
   };
 
-  // Get today's date in YYYY-MM-DD format for date input
-  const getTodayDate = () => {
-    return new Date().toISOString().split("T")[0];
-  };
+  const getTodayDate = () => new Date().toISOString().split("T")[0];
+
+  // If no session selected, show friendly message and button to dashboard index
+  if (!selectedSession || !selectedSession.id) {
+    return (
+      <div className="notice-container" style={{ padding: 20 }}>
+        <div className="empty-state">
+          <div className="empty-icon">⚠️</div>
+          <h3>No session selected</h3>
+          <p>
+            Please select a session from the Admin Dashboard home page to view
+            or manage notices.
+          </p>
+          <div style={{ marginTop: 12 }}>
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate("/admindashboard")}
+            >
+              Go to Dashboard (select session)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="notice-container">
-      {/* Header */}
       <div className="notice-header">
         <div className="header-left">
           <h2 className="notice-title">Notice Board</h2>
@@ -451,13 +310,18 @@ const AdminNotice = () => {
           </p>
         </div>
         <div className="header-right">
-          <button className="notice-add-btn" onClick={() => setShowForm(true)}>
+          <button
+            className="notice-add-btn"
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+          >
             <span className="btn-icon">+</span> Create New Notice
           </button>
         </div>
       </div>
 
-      {/* Notice Creation Form Modal */}
       {showForm && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -479,82 +343,70 @@ const AdminNotice = () => {
             <form onSubmit={handleSubmit} className="notice-form">
               <div className="form-grid">
                 <div className="form-group full-width">
-                  <label htmlFor="title">
+                  <label>
                     Title <span className="required">*</span>
                   </label>
                   <input
-                    type="text"
-                    id="title"
                     name="title"
                     value={noticeData.title}
                     onChange={handleInputChange}
-                    placeholder="Enter notice title"
-                    required
                     className="form-input"
+                    required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="subject">
+                  <label>
                     Subject <span className="required">*</span>
                   </label>
                   <input
-                    type="text"
-                    id="subject"
                     name="subject"
                     value={noticeData.subject}
                     onChange={handleInputChange}
-                    placeholder="Enter subject"
-                    required
                     className="form-input"
+                    required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="date">
+                  <label>
                     Date <span className="required">*</span>
                   </label>
                   <input
                     type="date"
-                    id="date"
                     name="date"
                     value={noticeData.date}
                     onChange={handleInputChange}
-                    required
                     className="form-input"
+                    required
                     max={getTodayDate()}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="issuedBy">
+                  <label>
                     Issued By <span className="required">*</span>
                   </label>
                   <input
-                    type="text"
-                    id="issuedBy"
                     name="issuedBy"
                     value={noticeData.issuedBy}
                     onChange={handleInputChange}
-                    placeholder="e.g., Principal, Admin"
-                    required
                     className="form-input"
+                    required
                   />
                 </div>
 
                 <div className="form-group full-width">
-                  <label htmlFor="message">
-                    Main Message <span className="required">*</span>
+                  <label>
+                    Message <span className="required">*</span>
                   </label>
                   <textarea
-                    id="message"
                     name="message"
                     value={noticeData.message}
                     onChange={handleInputChange}
-                    placeholder="Type your notice content here..."
+                    className="form-textarea"
                     rows="8"
                     required
-                    className="form-textarea"
                   />
                   <div className="char-count">
                     {noticeData.message.length} characters
@@ -591,7 +443,6 @@ const AdminNotice = () => {
         </div>
       )}
 
-      {/* Notices List */}
       <div className="notices-section">
         {loading && notices.length === 0 ? (
           <div className="loading-state">
@@ -605,7 +456,10 @@ const AdminNotice = () => {
             <p>Create your first notice to get started</p>
             <button
               className="btn btn-primary"
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
             >
               Create First Notice
             </button>
@@ -643,7 +497,6 @@ const AdminNotice = () => {
                     <button
                       className="icon-btn edit-btn"
                       onClick={() => editNotice(notice)}
-                      title="Edit Notice"
                       disabled={loading}
                     >
                       Edit
@@ -651,14 +504,12 @@ const AdminNotice = () => {
                     <button
                       className="icon-btn print-btn"
                       onClick={() => printNotice(notice)}
-                      title="Print Notice"
                     >
                       Print
                     </button>
                     <button
                       className="icon-btn delete-btn"
                       onClick={() => deleteNotice(notice.noticeId)}
-                      title="Delete Notice"
                       disabled={loading}
                     >
                       Delete

@@ -1,3 +1,4 @@
+// src/Componant/pages/AdminDashboard.jsx
 import React, { useState } from "react";
 import { NavLink, Routes, Route } from "react-router-dom";
 import {
@@ -8,7 +9,10 @@ import {
   FaMoneyBillWave,
   FaClipboardList,
 } from "react-icons/fa";
+
 import "./AdminDashboard.css";
+
+// Pages (adjust imports if your files live in different folders)
 import AdminStudentRegistration from "./AdminStudentRegistration";
 import ViewStudents from "./AdminViewStudents";
 import AdminTeacherRegistration from "./AdminTeacherRegistration";
@@ -28,7 +32,62 @@ import AdminNotice from "./AdminNotice";
 import AdminViewClassStudents from "./AdminViewClassStudents";
 import AdminStudentFeeDetails from "./AdminStudentFeeDetails";
 
-/* -------------------- Sidebar -------------------- */
+// Session context/provider (make sure this file exists and exports SessionProvider & SessionContext)
+import { SessionProvider, SessionContext } from "./SessionContext";
+import { useContext } from "react";
+
+/* SessionSelect component (uses SessionContext) */
+const SessionSelect = () => {
+  const { sessions, selectedSession, setSelectedSession, reloadSessions } =
+    useContext(SessionContext);
+
+  return (
+    <div
+      className="session-select"
+      style={{ display: "flex", gap: 10, alignItems: "center" }}
+    >
+      <label style={{ fontSize: 13, marginRight: 6 }}>Yearly Sessions</label>
+      <select
+        value={selectedSession ? selectedSession.id : ""}
+        onChange={(e) => {
+          const id = e.target.value;
+          const found = sessions.find((s) => String(s.id) === String(id));
+          setSelectedSession(found || null);
+        }}
+        style={{
+          padding: "6px 8px",
+          borderRadius: 6,
+          border: "1px solid #ccc",
+          minWidth: 180,
+        }}
+      >
+        <option value="">-- Select session --</option>
+        {sessions.map((s) => (
+          <option key={s.id ?? s.name} value={s.id}>
+            {s.name}
+          </option>
+        ))}
+      </select>
+
+      <button
+        type="button"
+        onClick={reloadSessions}
+        style={{
+          padding: "6px 8px",
+          borderRadius: 6,
+          border: "1px solid #ccc",
+          background: "white",
+          cursor: "pointer",
+        }}
+        title="Reload sessions"
+      >
+        ↻
+      </button>
+    </div>
+  );
+};
+
+/* Sidebar (unchanged) */
 const Sidebar = () => {
   const navClass = ({ isActive }) =>
     isActive ? "nav-item active" : "nav-item";
@@ -56,7 +115,6 @@ const Sidebar = () => {
           <FaChalkboardTeacher /> <span>View Classes</span>
         </NavLink>
 
-        {/* NEW ITEMS */}
         <NavLink to="/admindashboard/view-attendance" className={navClass}>
           <FaClipboardList /> <span>View Attendance</span>
         </NavLink>
@@ -74,8 +132,7 @@ const Sidebar = () => {
         </NavLink>
 
         <NavLink to="/admindashboard/notice" className={navClass}>
-          <FaClipboardList />
-          <span>Notice Board</span>
+          <FaClipboardList /> <span>Notice Board</span>
         </NavLink>
       </nav>
 
@@ -86,28 +143,22 @@ const Sidebar = () => {
   );
 };
 
-/* -------------------- Main Layout -------------------- */
+/* Main dashboard */
 const AdminDashboard = () => {
-  // store students and teachers so pages can update and view them
+  // local state examples (you already had these)
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
 
-  // Add teacher helper (passed to registration)
   const addTeacher = (t) => setTeachers((prev) => [t, ...prev]);
-
-  // Add student helper (passed to registration)
   const addStudent = (studentData) => {
     const newStudent = {
       id: Date.now(),
       admissionNo: studentData.admissionNo,
       name: studentData.name,
       dob: studentData.dob,
-      // include other fields if needed
     };
     setStudents((prev) => [newStudent, ...prev]);
   };
-
-  // Update teacher points
   const updatePoints = (id, val) =>
     setTeachers((prev) =>
       prev.map((t) =>
@@ -117,60 +168,76 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-page">
-      <Sidebar />
+      {/* SessionProvider wraps the dashboard so SessionSelect can read/update sessions.
+          But NOTE: SessionSelect is rendered only inside the index route below. */}
+      <SessionProvider apiBase="http://localhost:8080">
+        <Sidebar />
 
-      <main className="admin-content">
-        <Routes>
-          {/* Relative route paths (AdminDashboard should be mounted at /admindashboard/* in App.jsx) */}
-          <Route
-            path="add-student"
-            element={<AdminStudentRegistration onAddStudent={addStudent} />}
-          />
-          <Route
-            path="add-teacher"
-            element={<AdminTeacherRegistration onAddTeacher={addTeacher} />}
-          />
-          {/* show view students page and pass current students */}
-          <Route
-            path="view-students"
-            element={<ViewStudents students={students} />}
-          />
-          <Route
-            path="view-teachers"
-            element={
-              <AdminViewTeacher teachers={teachers} onUpdate={updatePoints} />
-            }
-          />
-          <Route path="view-classes" element={<AdminViewClasses />} />
-          <Route path="view-attendance" element={<AdminViewAttendance />} />
-          <Route path="view-fees" element={<AdminViewFees />} />
-          <Route path="view-enquiries" element={<AdminViewEnquiries />} />{" "}
-          <Route path="upload-student-excel" element={<AdminUploadExcel />} />
-          {/* index route */}
-          <Route path="upload-docs" element={<AdminUploadStudentDocuments />} />
-          <Route path="print-student" element={<AdminPrintStudentDetails />} />
-          <Route path="view-details" element={<ViewStudentDetails />} />
-          <Route path="update-student" element={<AdminUpdateStudent />} />
-          <Route path="add-class" element={<AdminAddClass />} />
-          // In your routing configuration
-          <Route path="update-class" element={<AdminUpdateClass />} />
-          <Route path="notice" element={<AdminNotice />} />
-          <Route path="fee-details" element={<AdminStudentFeeDetails />} />
-          <Route
-            path="view-class-student"
-            element={<AdminViewClassStudents />}
-          />
-          <Route
-            path=""
-            element={
-              <div className="page">
-                <h3>Welcome to Admin Dashboard</h3>
-                <p>Use the side menu to manage students and teachers.</p>
-              </div>
-            }
-          />
-        </Routes>
-      </main>
+        <main className="admin-content">
+          <Routes>
+            <Route
+              path="add-student"
+              element={<AdminStudentRegistration onAddStudent={addStudent} />}
+            />
+            <Route
+              path="add-teacher"
+              element={<AdminTeacherRegistration onAddTeacher={addTeacher} />}
+            />
+            <Route
+              path="view-students"
+              element={<ViewStudents students={students} />}
+            />
+            <Route
+              path="view-teachers"
+              element={
+                <AdminViewTeacher teachers={teachers} onUpdate={updatePoints} />
+              }
+            />
+            <Route path="view-classes" element={<AdminViewClasses />} />
+            <Route path="view-attendance" element={<AdminViewAttendance />} />
+            <Route path="view-fees" element={<AdminViewFees />} />
+            <Route path="view-enquiries" element={<AdminViewEnquiries />} />
+            <Route path="upload-student-excel" element={<AdminUploadExcel />} />
+
+            <Route
+              path="upload-docs"
+              element={<AdminUploadStudentDocuments />}
+            />
+            <Route
+              path="print-student"
+              element={<AdminPrintStudentDetails />}
+            />
+            <Route path="view-details" element={<ViewStudentDetails />} />
+            <Route path="update-student" element={<AdminUpdateStudent />} />
+            <Route path="add-class" element={<AdminAddClass />} />
+            <Route path="update-class" element={<AdminUpdateClass />} />
+            <Route path="notice" element={<AdminNotice />} />
+            <Route path="fee-details" element={<AdminStudentFeeDetails />} />
+            <Route
+              path="view-class-student"
+              element={<AdminViewClassStudents />}
+            />
+
+            {/* ------------------ INDEX ROUTE: show Session selector HERE only ------------------ */}
+            <Route
+              path=""
+              element={
+                <div className="page" style={{ padding: 20 }}>
+                  <h3>Welcome to Admin Dashboard</h3>
+                  <p style={{ marginBottom: 12 }}>
+                    Use the side menu to manage students and teachers.
+                  </p>
+
+                  {/* Session selector is placed only on the index page */}
+                  <div style={{ marginTop: 8 }}>
+                    <SessionSelect />
+                  </div>
+                </div>
+              }
+            />
+          </Routes>
+        </main>
+      </SessionProvider>
     </div>
   );
 };
