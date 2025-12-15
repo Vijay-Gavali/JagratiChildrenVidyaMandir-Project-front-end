@@ -17,7 +17,7 @@ const initialForm = {
   gender: "",
   studentAadharNo: "",
   parentAadharNo: "",
-  rte: "",
+  rte: "", // Changed to empty string
   tcNumber: "",
   ssmId: "",
   passoutClass: "",
@@ -153,7 +153,7 @@ const AdminStudentRegistration = ({
         studentAadharNo: form.studentAadharNo,
         parentAadharNo: form.parentAadharNo,
         studentClass: cls ? String(cls.name) : String(form.studentClassId),
-        rte: form.rte,
+        rte: form.rte, // Keep as string "Yes" or "No"
         tcNumber: form.tcNumber,
         ssmId: form.ssmId,
         passoutClass: form.passoutClass,
@@ -377,9 +377,14 @@ const AdminStudentRegistration = ({
               />
             </label>
 
+            {/* CHANGED: RTE as dropdown with Yes/No */}
             <label>
               RTE
-              <input name="rte" value={form.rte} onChange={handleChange} />
+              <select name="rte" value={form.rte} onChange={handleChange}>
+                <option value="">Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
             </label>
           </div>
 

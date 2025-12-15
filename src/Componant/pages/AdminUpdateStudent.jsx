@@ -971,14 +971,6 @@ const AdminUpdateStudent = ({ apiBase = "http://localhost:8080" }) => {
                         <span className="existing-file-name">
                           {existingDoc.fileName || existingDoc.filename}
                         </span>
-                        <a
-                          href={existingDoc.url || existingDoc.path}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="view-existing-btn"
-                        >
-                          View
-                        </a>
                       </div>
                     ) : (
                       <span className="no-file">No file selected</span>

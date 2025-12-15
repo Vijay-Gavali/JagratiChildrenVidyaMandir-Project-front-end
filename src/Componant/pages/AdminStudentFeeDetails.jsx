@@ -22,6 +22,8 @@ const AdminStudentFeeDetails = () => {
   const [error, setError] = useState("");
   const [studentInfo, setStudentInfo] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [classFees, setClassFees] = useState(null); // Store class fees amount
+  const [creatingFees, setCreatingFees] = useState(false); // Loading state for fee creation
 
   // Fetch student details, fee information, and transactions
   const fetchData = async () => {
@@ -50,9 +52,14 @@ const AdminStudentFeeDetails = () => {
       if (studentResponse.ok) {
         const studentData = await studentResponse.json();
         setStudentInfo(studentData);
+
+        // Fetch class fees if student has class information
+        if (studentData.studentClassId) {
+          await fetchClassFees(studentData.studentClassId);
+        }
       }
 
-      // Fetch fee information
+      // Fetch fee information for this student
       const feeResponse = await fetch(
         `http://localhost:8080/api/fees/user/${studentId}`
       );
@@ -60,6 +67,9 @@ const AdminStudentFeeDetails = () => {
       if (feeResponse.ok) {
         const feeData = await feeResponse.json();
         setFees(Array.isArray(feeData) ? feeData : [feeData]);
+      } else if (feeResponse.status === 404) {
+        // No fees found - student doesn't have fee structure
+        setFees([]);
       }
 
       // Fetch transactions for this user using sessionId API
@@ -112,6 +122,101 @@ const AdminStudentFeeDetails = () => {
       setRefreshing(false);
     }
   };
+
+  // Fetch class fees amount based on class ID
+  const fetchClassFees = async (classId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/classes/${classId}`
+      );
+      if (response.ok) {
+        const classData = await response.json();
+        // Assuming class fees is stored in a field like 'fees', 'feeAmount', 'classFees', etc.
+        // Adjust the field name based on your API response
+        const feesAmount =
+          classData.fees ||
+          classData.feeAmount ||
+          classData.classFees ||
+          classData.annualFees ||
+          0; // Default to 0 if not found
+        setClassFees(parseFloat(feesAmount));
+      }
+    } catch (err) {
+      console.error("Error fetching class fees:", err);
+      setClassFees(null);
+    }
+  };
+
+  const createFeeStructure = async () => {
+    if (!studentId) {
+      setError("Student missing");
+      return false;
+    }
+
+    try {
+      setCreatingFees(true);
+      setError("");
+
+      // use class fees or fallback
+      let feeAmount = Number(classFees);
+      if (!feeAmount || feeAmount <= 0) {
+        feeAmount = 10000; // fallback default
+      }
+
+      // ✅ BACKEND COMPATIBLE PAYLOAD
+      const feePayload = {
+        amount: feeAmount,
+        paidAmount: 0.0,
+        remainingAmount: feeAmount,
+        paymentStatus: "UNPAID",
+        userId: Number(studentId),
+      };
+
+      const response = await fetch("http://localhost:8080/api/fees/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(feePayload),
+      });
+
+      if (!response.ok) {
+        const msg = await response.text();
+        throw new Error(msg || "Failed to save fees");
+      }
+
+      const savedFee = await response.json();
+
+      // update state
+      setFees([savedFee]);
+
+      return true;
+    } catch (err) {
+      console.error("Fee save error:", err);
+      setError(err.message || "Fee creation failed");
+      return false;
+    } finally {
+      setCreatingFees(false);
+    }
+  };
+
+  // Check and create fee structure if needed
+  useEffect(() => {
+    const checkAndCreateFeeStructure = async () => {
+      // Wait for initial data to load
+      if (loading || creatingFees) return;
+
+      // Check if student exists but has no fee structure
+      if (studentInfo && fees.length === 0 && !error) {
+        console.log("Student has no fee structure. Creating automatically...");
+        await createFeeStructure();
+        // Refresh data after creating fee structure
+        fetchData();
+      }
+    };
+
+    checkAndCreateFeeStructure();
+  }, [loading, studentInfo, fees, error]);
 
   useEffect(() => {
     fetchData();
@@ -266,7 +371,7 @@ const AdminStudentFeeDetails = () => {
     fetchData();
   };
 
-  // Handle pay fees button click - This would use the save API
+  // Handle pay fees button click
   const handlePayFees = async (fee) => {
     const feeWithCalculations = getFeeWithCalculatedPaidAmount(fee);
     const remaining = feeWithCalculations.calculatedRemaining;
@@ -604,10 +709,16 @@ const AdminStudentFeeDetails = () => {
       )}
 
       {/* Loading Indicator */}
-      {(loading || refreshing) && (
+      {(loading || refreshing || creatingFees) && (
         <div className="loading-indicator">
           <div className="spinner"></div>
-          <p>{refreshing ? "Refreshing data..." : "Loading data..."}</p>
+          <p>
+            {creatingFees
+              ? "Creating fee structure..."
+              : refreshing
+              ? "Refreshing data..."
+              : "Loading data..."}
+          </p>
         </div>
       )}
 
@@ -617,13 +728,25 @@ const AdminStudentFeeDetails = () => {
       </div>
 
       <div className="fee-table-container">
-        {loading ? (
+        {loading || creatingFees ? (
           <div className="loading-state">
-            <p>Loading fee details...</p>
+            <div className="spinner"></div>
+            <p>
+              {creatingFees
+                ? "Creating fee structure automatically..."
+                : "Loading fee details..."}
+            </p>
           </div>
         ) : fees.length === 0 ? (
           <div className="empty-state">
-            <p>No fee records found for this student.</p>
+            <div className="empty-state-content">
+              <div className="empty-icon">⏳</div>
+              <h3>Creating Fee Structure...</h3>
+              <p>
+                This student doesn't have a fee structure yet. The system is
+                automatically creating one with the class fee amount.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="table-wrapper">

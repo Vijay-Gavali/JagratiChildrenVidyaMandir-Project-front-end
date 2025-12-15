@@ -1,5 +1,5 @@
 /* Main Container */
-.fees-container {
+.id-cards-container {
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
@@ -8,7 +8,7 @@
 }
 
 /* Header */
-.fees-header {
+.id-cards-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -17,14 +17,14 @@
     border-bottom: 2px solid #dee2e6;
 }
 
-.fees-title {
+.id-cards-title {
     color: #343a40;
     font-size: 28px;
     margin: 0;
     font-weight: 600;
 }
 
-.fees-refresh-btn {
+.id-cards-refresh-btn {
     background: #007bff;
     color: white;
     border: none;
@@ -34,26 +34,19 @@
     font-size: 14px;
     font-weight: 500;
     transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
-.fees-refresh-btn:hover:not(:disabled) {
+.id-cards-refresh-btn:hover:not(:disabled) {
     background: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
 }
 
-.fees-refresh-btn:disabled {
+.id-cards-refresh-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
 }
 
 /* Error Message */
-.fees-error {
+.id-cards-error {
     background: #f8d7da;
     color: #721c24;
     padding: 15px 20px;
@@ -62,10 +55,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border: 1px solid #f5c6cb;
 }
 
-.fees-error p {
+.id-cards-error p {
     margin: 0;
     font-size: 15px;
     flex-grow: 1;
@@ -82,23 +74,19 @@
     font-weight: 500;
     transition: all 0.3s ease;
     margin-left: 15px;
-    white-space: nowrap;
 }
 
 .error-retry-btn:hover:not(:disabled) {
     background: #c82333;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
 }
 
 .error-retry-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    transform: none !important;
 }
 
 /* Table Container */
-.fees-table-container {
+.id-cards-table-container {
     background: white;
     border-radius: 10px;
     overflow: hidden;
@@ -130,60 +118,34 @@
     font-size: 16px;
 }
 
-.add-class-btn {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.add-class-btn:hover {
-    background: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
-}
-
 /* Table */
-.fees-table {
+.id-cards-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.fees-table th {
+.id-cards-table th {
     background: #343a40;
     color: white;
     font-weight: 600;
     padding: 18px 15px;
-    text-align: left;
+    text-align: center;
     font-size: 15px;
     border-bottom: 3px solid #495057;
-    letter-spacing: 0.5px;
 }
 
-.fees-table td {
+.id-cards-table td {
     padding: 18px 15px;
     border-bottom: 1px solid #e9ecef;
     font-size: 15px;
     color: #495057;
 }
 
-.fees-table tbody tr {
-    transition: all 0.2s ease;
+.id-cards-table tbody tr:hover {
+    background-color: #f8f9fa;
 }
 
-/* .fees-table tbody tr:hover {
-    background-color: #f8f9fa;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-} */
-
-.fees-table tbody tr:last-child td {
+.id-cards-table tbody tr:last-child td {
     border-bottom: none;
 }
 
@@ -191,109 +153,90 @@
     text-align: center;
 }
 
-.text-left {
-    text-align: left;
-}
-
-.text-right {
-    text-align: right;
-}
-
 /* Class Name */
-.class-name {
-    font-weight: 500;
+.class-name1 {
+    font-weight: 600;
     color: #343a40;
     font-size: 16px;
-    text-align: left !important;
+    text-align: center;
 }
 
-/* Fees Amount */
-.fees-amount {
-    font-weight: 600;
-    color: #28a745;
-    font-size: 17px;
-    letter-spacing: 0.5px;
-}
-
-/* Action Buttons */
+/* Action Buttons - CENTERED */
 .action-buttons {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
     flex-wrap: wrap;
 }
 
-.view-btn {
-    background: #007bff;
+/* ID Card Button */
+.idcard1-btn {
+    background: #6a1b9a;
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 400;
+    font-weight: 500;
     transition: all 0.3s ease;
-    min-width: 120px;
+    min-width: 160px;
 }
 
-.view-btn:hover {
-    background: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+.idcard1-btn:hover {
+    background: #4a148c;
 }
 
-.idcard-btn {
-    background-color: #007bff;
+/* Admit Card Button */
+.admit-btn {
+    background: #28a745;
     color: white;
     border: none;
     padding: 10px 20px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
-    border-radius: 6px;
-    font-weight: 400;
+    font-weight: 500;
     transition: all 0.3s ease;
-    min-width: 140px;
+    min-width: 160px;
 }
 
-.idcard-btn:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(106, 27, 154, 0.2);
+.admit-btn:hover {
+    background: #218838;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .fees-container {
+    .id-cards-container {
         padding: 15px;
     }
 
-    .fees-header {
+    .id-cards-header {
         flex-direction: column;
         gap: 15px;
         align-items: stretch;
     }
 
-    .fees-title {
+    .id-cards-title {
         font-size: 24px;
         text-align: center;
     }
 
-    .fees-refresh-btn {
+    .id-cards-refresh-btn {
         width: 100%;
-        justify-content: center;
     }
 
-    .fees-table-container {
+    .id-cards-table-container {
         overflow-x: auto;
         border-radius: 8px;
     }
 
-    .fees-table {
-        min-width: 600px;
+    .id-cards-table {
+        min-width: 500px;
     }
 
-    .fees-error {
+    .id-cards-error {
         flex-direction: column;
         gap: 12px;
         align-items: stretch;
@@ -307,23 +250,24 @@
 
     .action-buttons {
         flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
+        align-items: center;
+        gap: 10px;
     }
 
-    .view-btn,
-    .idcard-btn {
+    .idcard1-btn,
+    .admit-btn {
         width: 100%;
+        max-width: 250px;
         min-width: unset;
     }
 }
 
 @media (max-width: 480px) {
-    .fees-title {
+    .id-cards-title {
         font-size: 22px;
     }
 
-    .fees-table td {
+    .id-cards-table td {
         padding: 15px 12px;
     }
 
@@ -334,44 +278,4 @@
     .loading-state {
         padding: 50px 15px;
     }
-}
-
-/* Table row striping for better readability */
-.fees-table tbody tr:nth-child(even) {
-    background-color: #fcfcfc;
-}
-
-.fees-table tbody tr:nth-child(even):hover {
-    background-color: #f8f9fa;
-}
-
-.idcard1-btn {
-    background-color: #0277bd;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    margin-right: 6px;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.admit-btn {
-    background-color: #0277bd;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.idcard1-btn:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(106, 27, 154, 0.2);
-}
-
-.admit-btn:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(106, 27, 154, 0.2);
 }

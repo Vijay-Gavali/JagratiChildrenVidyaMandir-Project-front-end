@@ -8,6 +8,7 @@ import {
   FaFileUpload,
   FaMoneyBillWave,
   FaClipboardList,
+  FaIdCard,
 } from "react-icons/fa";
 
 import "./AdminDashboard.css";
@@ -31,10 +32,15 @@ import AdminUploadExcel from "./AdminUploadExcel";
 import AdminNotice from "./AdminNotice";
 import AdminViewClassStudents from "./AdminViewClassStudents";
 import AdminStudentFeeDetails from "./AdminStudentFeeDetails";
+import AdminStudentIdCards from "./AdminStudentIdCards";
 
 // Session context/provider (make sure this file exists and exports SessionProvider & SessionContext)
 import { SessionProvider, SessionContext } from "./SessionContext";
 import { useContext } from "react";
+import AdminStudentIdClass from "./AdminStudentIdClass";
+import AdminPrintIdCard from "./AdminPrintIdCard";
+import AdminIdCardPrint from "./AdminIdCardPrint";
+import AdminIdCardPrintAll from "./AdminIdCardPrintAll";
 
 /* SessionSelect component (uses SessionContext) */
 const SessionSelect = () => {
@@ -134,6 +140,9 @@ const Sidebar = () => {
         <NavLink to="/admindashboard/notice" className={navClass}>
           <FaClipboardList /> <span>Notice Board</span>
         </NavLink>
+        <NavLink to="/admindashboard/generate-id-cards" className={navClass}>
+          <FaIdCard /> <span>Generate ID Card</span>
+        </NavLink>
       </nav>
 
       <div className="sidebar-footer">
@@ -214,8 +223,25 @@ const AdminDashboard = () => {
             <Route path="notice" element={<AdminNotice />} />
             <Route path="fee-details" element={<AdminStudentFeeDetails />} />
             <Route
+              path="/generate-id-cards"
+              element={<AdminStudentIdClass />}
+            />
+            <Route path="generate-admit-cards" element={<AdminPrintIdCard />} />
+            <Route
+              path="/generate-id-cards/print"
+              element={<AdminIdCardPrint />}
+            />
+
+            {/* <Route path="/generate-admit-cards" element={<AdmitCard />} /> */}
+
+            <Route
               path="view-class-student"
               element={<AdminViewClassStudents />}
+            />
+            <Route path="generate-id-cards" element={<AdminStudentIdCards />} />
+            <Route
+              path="generate-id-cards/print-all"
+              element={<AdminIdCardPrintAll />}
             />
 
             {/* ------------------ INDEX ROUTE: show Session selector HERE only ------------------ */}
