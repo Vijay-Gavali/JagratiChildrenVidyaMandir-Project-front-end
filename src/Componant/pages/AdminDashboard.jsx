@@ -32,7 +32,6 @@ import AdminUploadExcel from "./AdminUploadExcel";
 import AdminNotice from "./AdminNotice";
 import AdminViewClassStudents from "./AdminViewClassStudents";
 import AdminStudentFeeDetails from "./AdminStudentFeeDetails";
-import AdminStudentIdCards from "./AdminStudentIdCards";
 
 // Session context/provider (make sure this file exists and exports SessionProvider & SessionContext)
 import { SessionProvider, SessionContext } from "./SessionContext";
@@ -238,7 +237,6 @@ const AdminDashboard = () => {
               path="view-class-student"
               element={<AdminViewClassStudents />}
             />
-            <Route path="generate-id-cards" element={<AdminStudentIdCards />} />
             <Route
               path="generate-id-cards/print-all"
               element={<AdminIdCardPrintAll />}

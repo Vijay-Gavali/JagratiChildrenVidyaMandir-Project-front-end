@@ -257,7 +257,7 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
         <title>Student Details - ${user?.name || "Student"}</title>
         <style>
           @page {
-            margin: 15mm;
+            margin: 5mm;
           }
           body {
             font-family: 'Times New Roman', serif;
@@ -381,7 +381,7 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
           /* Documents Section */
           .documents-section {
             margin-top: 25px;
-            page-break-before: always;
+           /*  page-break-before: always;*/
           }
           .documents-table {
             width: 100%;
@@ -424,19 +424,7 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
             text-align: right;
           }
           
-          /* Print Controls */
-          @media print {
-            body {
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            .no-print {
-              display: none;
-            }
-            .print-container {
-              padding: 0;
-            }
-          }
+         @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none; } .print-container { padding: 0; } }
         </style>
       </head>
       <body>
@@ -508,12 +496,9 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
                 <td class="field-label">Student Aadhar No</td>
                 <td class="field-value">${user?.studentAadharNo || "—"}</td>
               </tr>
+            
               <tr>
-                <td class="field-label">RTE Status</td>
-                <td class="field-value">${user?.rte || "—"}</td>
-              </tr>
-              <tr>
-                <td class="field-label">SSM ID</td>
+                <td class="field-label">SSSM ID</td>
                 <td class="field-value">${user?.ssmId || "—"}</td>
               </tr>
               <tr>
@@ -797,7 +782,7 @@ const AdminViewStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
                     <span className="vsd-info-value">{user.rte || "-"}</span>
                   </div>
                   <div className="vsd-info-item">
-                    <span className="vsd-info-label">SSM ID</span>
+                    <span className="vsd-info-label">SSSM ID</span>
                     <span className="vsd-info-value">{user.ssmId || "-"}</span>
                   </div>
                   <div className="vsd-info-item">

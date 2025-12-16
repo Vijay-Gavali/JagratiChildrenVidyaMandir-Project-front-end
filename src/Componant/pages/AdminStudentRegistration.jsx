@@ -316,7 +316,7 @@ const AdminStudentRegistration = ({
 
           <div className="row">
             <label>
-              Email *
+              Email
               <input name="email" value={form.email} onChange={handleChange} />
               {errors.email && (
                 <small className="field-error">{errors.email}</small>

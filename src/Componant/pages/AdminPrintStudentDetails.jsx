@@ -27,7 +27,7 @@ const AdminPrintStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const [className, setClassName] = useState("");
   // Try several possible user endpoints (choose the first that returns 200 + valid JSON)
   const userEndpoints = [
     (id) => `${apiBase}/api/users/${id}`,
@@ -44,6 +44,32 @@ const AdminPrintStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
       if (qId) setStudentId(qId);
     }
   }, []);
+  const fetchClassName = async (classId) => {
+    if (!classId) {
+      setClassName("-");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiBase}/api/classes/getAll`);
+      if (!res.ok) {
+        setClassName(classId);
+        return;
+      }
+
+      const classes = await res.json();
+      const cls = classes.find(
+        (c) =>
+          String(c.classId) === String(classId) ||
+          String(c.id) === String(classId)
+      );
+
+      setClassName(cls?.className || cls?.name || classId);
+    } catch (err) {
+      console.error("Class fetch error", err);
+      setClassName(classId);
+    }
+  };
 
   const fetchUser = async (id) => {
     for (const getUrl of userEndpoints) {
@@ -82,6 +108,9 @@ const AdminPrintStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
     try {
       const [u, d] = await Promise.all([fetchUser(id), fetchDocs(id)]);
       setUser(u);
+      if (u?.studentClassId || u?.studentClass) {
+        fetchClassName(u.studentClassId || u.studentClass);
+      }
       setDocs(d);
     } catch (err) {
       console.error(err);
@@ -196,21 +225,21 @@ const AdminPrintStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
                   <td>{fmtDate(user.dob)}</td>
                 </tr>
                 <tr>
-                  <td className="ps-label">Class</td>
-                  <td>{user.studentClass ?? user.studentClassId ?? "-"}</td>
-                  <td className="ps-label">Phone</td>
+                  <td className="ps-label">Class Name</td>
+                  <td>{className || "-"}</td>
+                  <td className="ps-label">Phone Number</td>
                   <td>{user.studentPhone ?? "-"}</td>
                 </tr>
                 <tr>
-                  <td className="ps-label">Email</td>
+                  <td className="ps-label">Email Id</td>
                   <td>{user.email ?? "-"}</td>
                   <td className="ps-label">Parent Phone</td>
                   <td>{user.parentPhone ?? "-"}</td>
                 </tr>
                 <tr>
-                  <td className="ps-label">Father</td>
+                  <td className="ps-label">Father Name</td>
                   <td>{user.fatherName ?? "-"}</td>
-                  <td className="ps-label">Mother</td>
+                  <td className="ps-label">Mother Name</td>
                   <td>{user.motherName ?? "-"}</td>
                 </tr>
                 <tr>
@@ -239,7 +268,7 @@ const AdminPrintStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
               <table className="ps-doc-table">
                 <thead>
                   <tr>
-                    <th>#</th>
+                    <th>Sr No</th>
                     <th>Type</th>
                     <th>Filename / Info</th>
                     <th>Uploaded At</th>
@@ -280,7 +309,7 @@ const AdminPrintStudentDetails = ({ apiBase = "http://localhost:8080" }) => {
           {/* Footer / Sign */}
           <div className="ps-footer">
             <div className="ps-sign">
-              <div>Prepared by: ____________________</div>
+              <div>Signature: ____________________</div>
               <div>Date: ____________________</div>
             </div>
           </div>

@@ -826,7 +826,7 @@ const AdminUpdateStudent = ({ apiBase = "http://localhost:8080" }) => {
               </div>
 
               <div className="form-group">
-                <label>SSM ID</label>
+                <label>SSSM ID</label>
                 <input
                   type="text"
                   name="ssmId"
