@@ -69,27 +69,27 @@
 }
 
 .id-photo {
-    width: 80px;
+    width: 100px;
     text-align: center;
 }
 
 .id-photo img {
-    width: 80px;
-    height: 100px;
+    width: 100px;
+    height: 110px;
     border: 1px solid #000;
     object-fit: cover;
 }
 
 .signature {
     font-size: 11px;
-    margin-top: 6px;
+    margin-top: 60px;
     border-top: 1px solid #000;
 }
 
 /* DETAILS */
 .id-details {
     flex: 1;
-    margin-left: 8px;
+    margin-left: 10px;
     font-size: 12px;
 }
 
