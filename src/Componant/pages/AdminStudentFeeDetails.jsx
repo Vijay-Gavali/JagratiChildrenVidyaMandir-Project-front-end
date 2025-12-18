@@ -1,31 +1,40 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./AdminStudentFeeDetails.css";
-import { SessionContext } from "./SessionContext"; // Adjust path as needed
+import { SessionContext } from "./SessionContext";
 
 const AdminStudentFeeDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get session ID from context (same as Notice component)
   const { selectedSession } = useContext(
     SessionContext || { selectedSession: null }
   );
 
-  // Get student ID from navigation state
   const studentId = location.state?.studentId;
   const studentName = location.state?.studentName || "Student";
-
+  const [className, setClassName] = useState("");
   const [fees, setFees] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [studentInfo, setStudentInfo] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [classFees, setClassFees] = useState(null); // Store class fees amount
-  const [creatingFees, setCreatingFees] = useState(false); // Loading state for fee creation
+  const [classFees, setClassFees] = useState(null);
+  const [creatingFees, setCreatingFees] = useState(false);
 
-  // Fetch student details, fee information, and transactions
+  const fetchClassName = async (classId) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/classes/${classId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setClassName(data.className || data.name || data.standard || "");
+      }
+    } catch (err) {
+      console.error("Failed to fetch class name", err);
+    }
+  };
+
   const fetchData = async () => {
     if (!studentId) {
       setError("No student selected.");
@@ -33,7 +42,6 @@ const AdminStudentFeeDetails = () => {
       return;
     }
 
-    // Check if session is selected
     if (!selectedSession || !selectedSession.id) {
       setError("Please select a session from the dashboard first.");
       setLoading(false);
@@ -45,7 +53,6 @@ const AdminStudentFeeDetails = () => {
       setRefreshing(true);
       setError("");
 
-      // Fetch student information
       const studentResponse = await fetch(
         `http://localhost:8080/api/users/${studentId}`
       );
@@ -53,13 +60,12 @@ const AdminStudentFeeDetails = () => {
         const studentData = await studentResponse.json();
         setStudentInfo(studentData);
 
-        // Fetch class fees if student has class information
         if (studentData.studentClassId) {
           await fetchClassFees(studentData.studentClassId);
+          await fetchClassName(studentData.studentClassId);
         }
       }
 
-      // Fetch fee information for this student
       const feeResponse = await fetch(
         `http://localhost:8080/api/fees/user/${studentId}`
       );
@@ -68,11 +74,9 @@ const AdminStudentFeeDetails = () => {
         const feeData = await feeResponse.json();
         setFees(Array.isArray(feeData) ? feeData : [feeData]);
       } else if (feeResponse.status === 404) {
-        // No fees found - student doesn't have fee structure
         setFees([]);
       }
 
-      // Fetch transactions for this user using sessionId API
       const sessionId = selectedSession.id;
       const transactionResponse = await fetch(
         `http://localhost:8080/api/transactions/${sessionId}/getAllUsingSessionId`
@@ -80,7 +84,6 @@ const AdminStudentFeeDetails = () => {
 
       if (transactionResponse.ok) {
         const transactionData = await transactionResponse.json();
-        // Handle different response formats
         let transactionsList = [];
 
         if (Array.isArray(transactionData)) {
@@ -100,7 +103,6 @@ const AdminStudentFeeDetails = () => {
           }
         }
 
-        // Filter transactions for this specific student
         const studentTransactions = transactionsList.filter(
           (transaction) => transaction.userId === studentId
         );
@@ -123,7 +125,6 @@ const AdminStudentFeeDetails = () => {
     }
   };
 
-  // Fetch class fees amount based on class ID
   const fetchClassFees = async (classId) => {
     try {
       const response = await fetch(
@@ -131,14 +132,13 @@ const AdminStudentFeeDetails = () => {
       );
       if (response.ok) {
         const classData = await response.json();
-        // Assuming class fees is stored in a field like 'fees', 'feeAmount', 'classFees', etc.
-        // Adjust the field name based on your API response
+
         const feesAmount =
           classData.fees ||
           classData.feeAmount ||
           classData.classFees ||
           classData.annualFees ||
-          0; // Default to 0 if not found
+          0;
         setClassFees(parseFloat(feesAmount));
       }
     } catch (err) {
@@ -157,13 +157,11 @@ const AdminStudentFeeDetails = () => {
       setCreatingFees(true);
       setError("");
 
-      // use class fees or fallback
       let feeAmount = Number(classFees);
       if (!feeAmount || feeAmount <= 0) {
-        feeAmount = 10000; // fallback default
+        feeAmount = 10000;
       }
 
-      // ✅ BACKEND COMPATIBLE PAYLOAD
       const feePayload = {
         amount: feeAmount,
         paidAmount: 0.0,
@@ -186,10 +184,7 @@ const AdminStudentFeeDetails = () => {
       }
 
       const savedFee = await response.json();
-
-      // update state
       setFees([savedFee]);
-
       return true;
     } catch (err) {
       console.error("Fee save error:", err);
@@ -200,17 +195,13 @@ const AdminStudentFeeDetails = () => {
     }
   };
 
-  // Check and create fee structure if needed
   useEffect(() => {
     const checkAndCreateFeeStructure = async () => {
-      // Wait for initial data to load
       if (loading || creatingFees) return;
 
-      // Check if student exists but has no fee structure
       if (studentInfo && fees.length === 0 && !error) {
         console.log("Student has no fee structure. Creating automatically...");
         await createFeeStructure();
-        // Refresh data after creating fee structure
         fetchData();
       }
     };
@@ -222,7 +213,6 @@ const AdminStudentFeeDetails = () => {
     fetchData();
   }, [studentId, selectedSession]);
 
-  // If no session selected, show message similar to Notice component
   if (!selectedSession || !selectedSession.id) {
     return (
       <div className="admin-fee-details-container" style={{ padding: 20 }}>
@@ -246,26 +236,20 @@ const AdminStudentFeeDetails = () => {
     );
   }
 
-  // Format date to be more readable
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     try {
       const date = new Date(dateString);
-      // Format: DD-MM-YYYY HH:MM
       const day = String(date.getDate()).padStart(2, "0");
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const year = date.getFullYear();
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-
-      return `${day}-${month}-${year} ${hours}:${minutes}`;
+      return `${day}-${month}-${year}`;
     } catch (error) {
       console.error("Error formatting date:", dateString, error);
       return dateString;
     }
   };
 
-  // Format currency
   const formatCurrency = (amount) => {
     if (amount === null || amount === undefined) return "₹ 0";
     return `₹ ${parseFloat(amount).toLocaleString("en-IN", {
@@ -274,19 +258,15 @@ const AdminStudentFeeDetails = () => {
     })}`;
   };
 
-  // Calculate totals from fees
   const calculateFeeTotals = () => {
     let totalFees = 0;
-
     fees.forEach((fee) => {
       const amount = parseFloat(fee.amount) || 0;
       totalFees += amount;
     });
-
     return totalFees;
   };
 
-  // Calculate total from transactions (only successful ones)
   const calculateTransactionTotal = () => {
     return transactions
       .filter(
@@ -299,27 +279,16 @@ const AdminStudentFeeDetails = () => {
       );
   };
 
-  // Calculate remaining amount
   const calculateRemainingAmount = () => {
     const totalFees = calculateFeeTotals();
     const totalPaid = calculateTransactionTotal();
     return Math.max(0, totalFees - totalPaid);
   };
 
-  // Calculate payment percentage
-  const calculatePaymentPercentage = () => {
-    const totalFees = calculateFeeTotals();
-    const totalPaid = calculateTransactionTotal();
-    if (totalFees === 0) return 0;
-    return Math.round((totalPaid / totalFees) * 100);
-  };
-
-  // Get fee details with calculated paid amount from transactions
   const getFeeWithCalculatedPaidAmount = (fee) => {
     const feeId = fee.feesId;
     const feeAmount = parseFloat(fee.amount) || 0;
 
-    // Calculate paid amount for this specific fee from transactions
     const feeTransactions = transactions.filter(
       (t) => t.description && t.description.includes(feeId.toString())
     );
@@ -327,12 +296,10 @@ const AdminStudentFeeDetails = () => {
     let paidAmount = 0;
 
     if (feeTransactions.length > 0) {
-      // If transactions are linked to this fee
       paidAmount = feeTransactions
         .filter((t) => t.status && t.status.toLowerCase() === "success")
         .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     } else {
-      // If transactions are not linked to specific fees, distribute proportionally
       const totalFees = calculateFeeTotals();
       const totalPaid = calculateTransactionTotal();
       if (totalFees > 0) {
@@ -355,29 +322,24 @@ const AdminStudentFeeDetails = () => {
     };
   };
 
-  // Calculate overall totals
   const totalFees = calculateFeeTotals();
   const totalPaid = calculateTransactionTotal();
   const totalRemaining = calculateRemainingAmount();
-  const paymentPercentage = calculatePaymentPercentage();
+  const paymentPercentage = Math.round((totalPaid / totalFees) * 100) || 0;
 
-  // Handle back navigation
   const goBack = () => {
     navigate(-1);
   };
 
-  // Handle refresh
   const handleRefresh = () => {
     fetchData();
   };
 
-  // Handle pay fees button click
   const handlePayFees = async (fee) => {
     const feeWithCalculations = getFeeWithCalculatedPaidAmount(fee);
     const remaining = feeWithCalculations.calculatedRemaining;
 
     if (remaining > 0) {
-      // Show payment dialog
       const paymentAmount = prompt(
         `Enter payment amount for Fee ID: ${fee.feesId}\n\n` +
           `Fee Amount: ${formatCurrency(fee.amount)}\n` +
@@ -393,20 +355,15 @@ const AdminStudentFeeDetails = () => {
         const amount = parseFloat(paymentAmount);
         if (amount > 0 && amount <= remaining) {
           try {
-            // Get session ID from context
             const sessionId = selectedSession.id;
-
-            // Create transaction object
             const transactionData = {
               amount: amount,
-              paymentMode: "CASH", // Default, you can make this selectable
+              paymentMode: "CASH",
               description: `Payment for Fee ID: ${fee.feesId} - Student: ${studentName}`,
               remarks: `Paid for ${studentName}'s fee (ID: ${studentId})`,
-              // Add userId if your TransactionDTO requires it
               userId: parseInt(studentId),
             };
 
-            // Save transaction using the session-based API
             const response = await fetch(
               `http://localhost:8080/api/transactions/${sessionId}/save`,
               {
@@ -419,15 +376,7 @@ const AdminStudentFeeDetails = () => {
             );
 
             if (response.ok) {
-              const savedTransaction = await response.json();
-              alert(
-                `Payment of ${formatCurrency(
-                  amount
-                )} saved successfully!\nTransaction ID: ${
-                  savedTransaction.transactionId
-                }`
-              );
-              // Refresh data to show updated transactions
+              alert(`Payment of ${formatCurrency(amount)} saved successfully!`);
               fetchData();
             } else {
               const errorText = await response.text().catch(() => "");
@@ -436,7 +385,6 @@ const AdminStudentFeeDetails = () => {
               );
             }
           } catch (err) {
-            console.error("Error saving transaction:", err);
             alert(`Error saving payment: ${err.message}`);
           }
         } else {
@@ -450,141 +398,130 @@ const AdminStudentFeeDetails = () => {
     }
   };
 
-  // Print receipt
+  // Simple receipt with TWO per page
   const printReceipt = (transaction, studentName) => {
     const printWindow = window.open("", "_blank");
+
     printWindow.document.write(`
-      <html>
-        <head>
-          <title>Receipt - ${transaction.transactionId}</title>
-          <style>
-            body {
-              font-family: 'Courier New', monospace;
-              font-size: 12px;
-              line-height: 1.5;
-              max-width: 400px;
-              margin: 20px auto;
-              padding: 20px;
-              border: 1px solid #ccc;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 20px;
-            }
-            .divider {
-              border-top: 2px dashed #000;
-              margin: 10px 0;
-            }
-            .details {
-              margin: 15px 0;
-            }
-            .footer {
-              margin-top: 20px;
-              text-align: center;
-              font-size: 10px;
-              color: #666;
-            }
-            .summary {
-              margin: 15px 0;
-              padding: 10px;
-              background: #f8f9fa;
-              border-radius: 4px;
-            }
-            .summary-row {
-              display: flex;
-              justify-content: space-between;
-              margin: 5px 0;
-            }
-          </style>
-        </head>
-        <body>
+    <html>
+      <head>
+        <title>Receipt</title>
+        <style>
+          body { font-family: Arial; margin: 20px; }
+          .receipt { border: 2px solid black; padding: 20px; margin-bottom: 20px; }
+          .header { text-align: center; }
+          .row { display: flex; justify-content: space-between; margin: 10px 0; }
+          .amount { text-align: center; font-size: 20px; font-weight: bold; margin: 20px 0; }
+          .signature { display: flex; justify-content: space-between; margin-top: 40px; }
+          .signature div { text-align: center; width: 45%; }
+          .copy { text-align: center; margin-top: 10px; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <!-- School Copy -->
+        <div class="receipt">
           <div class="header">
-            <h2>JAGRATI CHILDREN VIDYA MANDIR</h2>
-            <h3>FEE PAYMENT RECEIPT</h3>
-            <p><strong>Session:</strong> ${
-              selectedSession.name || selectedSession.id
-            }</p>
+            <h3>JAGRATI CHILDREN VIDYA MANDIR</h3>
+            <h4>ORIGINAL FEE RECEIPT</h4>
           </div>
           
-          <div class="details">
-            <p><strong>Student:</strong> ${studentName}</p>
-            <p><strong>Admission No:</strong> ${
+          <div class="row">
+            <span><strong>Date:</strong> ${formatDate(
+              transaction.paymentDate
+            )}</span>
+            <span><strong>Receipt No:</strong> ${
+              transaction.receiptNumber || transaction.id || "N/A"
+            }</span>
+          </div>
+          
+          <div class="row">
+            <span><strong>Name:</strong> ${studentName}</span>
+            <span><strong>Admission No:</strong> ${
               studentInfo?.admissionNo || "N/A"
-            }</p>
-            <p><strong>Class:</strong> ${studentInfo?.studentClass || "N/A"}</p>
+            }</span>
           </div>
           
-          <div class="divider"></div>
-          
-          <div class="details">
-            <p><strong>Transaction ID:</strong> ${transaction.transactionId}</p>
-            <p><strong>Receipt No:</strong> ${transaction.receiptNumber}</p>
-            <p><strong>Date:</strong> ${formatDate(transaction.paymentDate)}</p>
+          <div class="row">
+            <span><strong>Class:</strong> ${className || "N/A"}</span>
+            <span><strong>Academic Year:</strong> ${
+              selectedSession.name || selectedSession.id
+            }</span>
           </div>
           
-          <div class="divider"></div>
-          
-          <div class="details">
-            <h4>Payment Details:</h4>
-            <p><strong>Amount:</strong> ${formatCurrency(
-              transaction.amount
-            )}</p>
-            <p><strong>Payment Mode:</strong> ${transaction.paymentMode}</p>
-            ${
-              transaction.bankName
-                ? `<p><strong>Bank:</strong> ${transaction.bankName}</p>`
-                : ""
-            }
-            ${
-              transaction.upiId
-                ? `<p><strong>UPI ID:</strong> ${transaction.upiId}</p>`
-                : ""
-            }
-            <p><strong>Description:</strong> ${transaction.description}</p>
-            <p><strong>Status:</strong> ${transaction.status}</p>
-            ${
-              transaction.remarks
-                ? `<p><strong>Remarks:</strong> ${transaction.remarks}</p>`
-                : ""
-            }
+          <div class="row">
+            <span><strong>Payment Mode:</strong> ${
+              transaction.paymentMode || "CASH"
+            }</span>
           </div>
           
-          <div class="divider"></div>
-          
-          <div class="summary">
-            <div class="summary-row">
-              <span><strong>Total Fees:</strong></span>
-              <span>${formatCurrency(totalFees)}</span>
-            </div>
-            <div class="summary-row">
-              <span><strong>Total Paid:</strong></span>
-              <span>${formatCurrency(totalPaid)}</span>
-            </div>
-            <div class="summary-row">
-              <span><strong>Remaining:</strong></span>
-              <span>${formatCurrency(totalRemaining)}</span>
-            </div>
-            <div class="summary-row">
-              <span><strong>Payment Progress:</strong></span>
-              <span>${paymentPercentage}%</span>
-            </div>
+          <div class="amount">
+           <span><strong>Paid Ammount:</strong>
+            ${formatCurrency(transaction.amount)}
           </div>
           
-          <div class="footer">
-            <p>Thank You for Your Payment!</p>
-            <p>Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
+          <div class="signature">
+            <div>__________<br>Parent/Student</div>
+            <div>__________<br>School Authority</div>
           </div>
-        </body>
-      </html>
-    `);
+          
+        </div>
+
+        <!-- Parent Copy -->
+        <div class="receipt">
+          <div class="header">
+            <h3>JAGRATI CHILDREN VIDYA MANDIR</h3>
+            <h4>ORIRGINAL FEE RECEIPT</h4>
+          </div>
+          
+          <div class="row">
+            <span><strong>Date:</strong> ${formatDate(
+              transaction.paymentDate
+            )}</span>
+            <span><strong>Receipt No:</strong> ${
+              transaction.receiptNumber || transaction.id || "N/A"
+            }</span>
+          </div>
+          
+          <div class="row">
+            <span><strong>Name:</strong> ${studentName}</span>
+            <span><strong>Admission No:</strong> ${
+              studentInfo?.admissionNo || "N/A"
+            }</span>
+          </div>
+          
+          <div class="row">
+            <span><strong>Class:</strong> ${className || "N/A"}</span>
+            <span><strong>Academic Year:</strong> ${
+              selectedSession.name || selectedSession.id
+            }</span>
+          </div>
+          
+          <div class="row">
+            <span><strong>Payment Mode:</strong> ${
+              transaction.paymentMode || "CASH"
+            }</span>
+          </div>
+          
+          <div class="amount">
+           <span><strong>Paid Ammount:</strong>
+            ${formatCurrency(transaction.amount)}
+          </div>
+          
+          <div class="signature">
+            <div>__________<br>Parent/Student</div>
+            <div>__________<br>School Authority</div>
+          </div>
+          
+        </div>
+      </body>
+    </html>
+  `);
+
     printWindow.document.close();
     printWindow.print();
   };
-
-  // Get status badge class for transaction
   const getStatusClass = (status) => {
     if (!status) return "pending";
-
     const statusLower = status.toLowerCase();
     if (
       statusLower === "success" ||
@@ -596,13 +533,10 @@ const AdminStudentFeeDetails = () => {
       return "pending";
     } else if (statusLower === "failed" || statusLower === "cancelled") {
       return "failed";
-    } else if (statusLower === "refunded") {
-      return "refunded";
     }
     return "pending";
   };
 
-  // Get fee status class
   const getFeeStatusClass = (status) => {
     const statusLower = status.toLowerCase();
     if (statusLower === "paid") return "paid";
@@ -612,7 +546,6 @@ const AdminStudentFeeDetails = () => {
 
   return (
     <div className="admin-fee-details-container">
-      {/* Header */}
       <div className="admin-fee-header">
         <div className="header-left">
           <div className="button-group">
@@ -665,7 +598,6 @@ const AdminStudentFeeDetails = () => {
         )}
       </div>
 
-      {/* Student Info */}
       {studentInfo && (
         <div className="student-info-card">
           <div className="info-row">
@@ -685,7 +617,7 @@ const AdminStudentFeeDetails = () => {
           {studentInfo.studentClass && (
             <div className="info-row">
               <span className="info-label">Class:</span>
-              <span className="info-value">{studentInfo.studentClass}</span>
+              <span className="info-value">{className || "N/A"}</span>
             </div>
           )}
           <div className="info-row">
@@ -701,14 +633,12 @@ const AdminStudentFeeDetails = () => {
         </div>
       )}
 
-      {/* Error Message */}
       {error && (
         <div className="error-message">
           <p>{error}</p>
         </div>
       )}
 
-      {/* Loading Indicator */}
       {(loading || refreshing || creatingFees) && (
         <div className="loading-indicator">
           <div className="spinner"></div>
@@ -722,7 +652,6 @@ const AdminStudentFeeDetails = () => {
         </div>
       )}
 
-      {/* Fees Details Table with Actions */}
       <div className="section-header">
         <h3>Fee Structure</h3>
       </div>
@@ -761,12 +690,10 @@ const AdminStudentFeeDetails = () => {
                   <th>Actions</th>
                 </tr>
               </thead>
-
               <tbody>
                 {fees.map((fee) => {
                   const feeWithCalculations =
                     getFeeWithCalculatedPaidAmount(fee);
-
                   return (
                     <tr key={fee.feesId}>
                       <td className="text-center">{fee.feesId}</td>
@@ -814,7 +741,6 @@ const AdminStudentFeeDetails = () => {
         )}
       </div>
 
-      {/* Transactions Table with Print Button */}
       <div className="section-header">
         <h3>Payment Transactions</h3>
       </div>
@@ -841,7 +767,6 @@ const AdminStudentFeeDetails = () => {
                   <th>Actions</th>
                 </tr>
               </thead>
-
               <tbody>
                 {transactions.map((transaction, index) => (
                   <tr key={transaction.id || transaction.transactionId}>

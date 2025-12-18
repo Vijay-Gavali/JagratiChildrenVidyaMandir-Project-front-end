@@ -6,7 +6,6 @@ const AdminPrintIdCard = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get class ID from navigation state
   const classId = location.state?.classId;
   const className = location.state?.className || "Class";
 
@@ -15,6 +14,7 @@ const AdminPrintIdCard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showAdmitCards, setShowAdmitCards] = useState(false); // NEW STATE
 
   useEffect(() => {
     if (!classId) {
@@ -75,36 +75,81 @@ const AdminPrintIdCard = () => {
     navigate("/admindashboard/generate-id-cards");
   };
 
-  // Function to handle download all ID cards
-  const handleDownloadAllIdCards = () => {
+  // Function to show all admit cards for printing
+  const handleShowAllAdmitCards = () => {
     if (students.length === 0) {
-      alert("No students to download ID cards for.");
+      alert("No students to generate admit cards for.");
       return;
     }
-    // Here you would implement the logic to download all ID cards
-    console.log(
-      `Downloading ID cards for all ${students.length} students in ${className}`
-    );
-    alert(
-      `Downloading ID cards for all ${students.length} students in ${className}`
+    setShowAdmitCards(true);
+  };
+
+  // Function to close admit cards view
+  const handleCloseAdmitCards = () => {
+    setShowAdmitCards(false);
+  };
+
+  // ADMIT CARDS COMPONENT (Embedded)
+  const AdmitCardsView = () => {
+    return (
+      <div className="print-root">
+        {/* ACTION BUTTONS (NOT PRINTED) */}
+        <div className="print-actions">
+          <button onClick={handleCloseAdmitCards} className="back-btn">
+            ← Back to List
+          </button>
+          <button onClick={() => window.print()} className="print-btn">
+            🖨 Print All Admit Cards
+          </button>
+        </div>
+
+        {/* ALL ADMIT CARDS */}
+        {students.map((student) => (
+          <div className="admit-card page-break" key={student.userId}>
+            <h1 className="school-title">JAGRATI CHILDREN VIDYA MANDIR</h1>
+
+            <div className="session-text">
+              Half yearly Examination Session - 2025-26
+            </div>
+
+            <div className="admit-label">Admit Card</div>
+
+            <div className="details">
+              <div className="detail-row">
+                <span>Name of student :</span>
+                <span className="value">{student.name || "__________"}</span>
+
+                <span>Father Name :</span>
+                <span className="value">
+                  {student.fatherName || "__________"}
+                </span>
+              </div>
+
+              <div className="detail-row">
+                <span>Roll No :</span>
+                <span className="value red">{"__________"}</span>
+
+                <span>Class :</span>
+                <span className="value">{className}</span>
+              </div>
+            </div>
+
+            <div className="signatures">
+              <div>Class teacher signature --------------------</div>
+              <div>Principal signature --------------------</div>
+            </div>
+          </div>
+        ))}
+      </div>
     );
   };
 
-  // Function to handle download all admit cards
-  const handleDownloadAllAdmitCards = () => {
-    if (students.length === 0) {
-      alert("No students to download admit cards for.");
-      return;
-    }
-    // Here you would implement the logic to download all admit cards
-    console.log(
-      `Downloading admit cards for all ${students.length} students in ${className}`
-    );
-    alert(
-      `Downloading admit cards for all ${students.length} students in ${className}`
-    );
-  };
+  // If showing admit cards, render that view instead
+  if (showAdmitCards) {
+    return <AdmitCardsView />;
+  }
 
+  // Original main view
   return (
     <div className="print-id-card-container">
       {/* Header */}
@@ -134,8 +179,7 @@ const AdminPrintIdCard = () => {
               </button>
               <button
                 className="download-all-admit-btn"
-                onClick={handleDownloadAllAdmitCards}
-                disabled={students.length === 0}
+                onClick={handleShowAllAdmitCards} // Updated to use local function
               >
                 Download All Admit Cards
               </button>
@@ -144,7 +188,7 @@ const AdminPrintIdCard = () => {
         )}
       </div>
 
-      {/* Search - CENTERED */}
+      {/* Rest of your component remains the same */}
       <div className="search-section">
         <input
           type="text"
@@ -155,10 +199,8 @@ const AdminPrintIdCard = () => {
         />
       </div>
 
-      {/* Error */}
       {error && <div className="error-message">{error}</div>}
 
-      {/* Table */}
       <div className="students-table-container">
         {loading ? (
           <div className="loading-state">Loading students...</div>
@@ -198,16 +240,14 @@ const AdminPrintIdCard = () => {
                       <button
                         className="admit-btn"
                         onClick={() =>
-                          navigate(
-                            "/admindashboard/generate-admit-cards/print",
-                            {
-                              state: {
-                                studentId: student.userId,
-                                className,
-                                studentName: student.name,
-                              },
-                            }
-                          )
+                          navigate("/admindashboard/generate-admit-card", {
+                            state: {
+                              studentId: student.userId,
+                              className,
+                              studentName: student.name,
+                              fatherName: student.fatherName,
+                            },
+                          })
                         }
                       >
                         Download Admit Card

@@ -111,11 +111,9 @@ const AdminUploadStudentDocuments = ({ apiBase = "http://localhost:8080" }) => {
       [key]: null,
     }));
 
-    // Clear validation error when user interacts
     if (validationError) setValidationError("");
   };
 
-  // Batch upload (Save) - uploads all selected files sequentially
   const handleSaveAll = async (e) => {
     e.preventDefault();
 
@@ -127,7 +125,6 @@ const AdminUploadStudentDocuments = ({ apiBase = "http://localhost:8080" }) => {
     setUploadingGlobal(true);
     setValidationError("");
 
-    // Reset all statuses before starting upload
     setDocStatus({
       adhar: null,
       sssm: null,
@@ -182,8 +179,7 @@ const AdminUploadStudentDocuments = ({ apiBase = "http://localhost:8080" }) => {
         state: { studentId },
       });
 
-      // Optionally clear files after successful upload and navigation
-      // Note: We're navigating away, so clearing might not be necessary
+
     } else {
       const messages = failed.map((f) => `${f.label}: ${f.result.error}`);
       window.alert(
@@ -194,7 +190,6 @@ const AdminUploadStudentDocuments = ({ apiBase = "http://localhost:8080" }) => {
     }
   };
 
-  // Handle back button - show confirmation if files are selected
   const handleBack = () => {
     const hasSelectedFiles = Object.values(docs).some((doc) => doc !== null);
     if (
@@ -208,7 +203,6 @@ const AdminUploadStudentDocuments = ({ apiBase = "http://localhost:8080" }) => {
     navigate(-1);
   };
 
-  // Clear all selected files
   const handleClearAll = () => {
     if (window.confirm("Clear all selected documents?")) {
       setDocs({

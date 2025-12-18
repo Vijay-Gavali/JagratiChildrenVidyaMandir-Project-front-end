@@ -5,7 +5,6 @@ import "./AdminAddClass.css";
 const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
   const navigate = useNavigate();
 
-  // Form state
   const [form, setForm] = useState({
     className: "",
     fees: "",
@@ -16,7 +15,6 @@ const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
   const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Validation function
   const validateForm = () => {
     const newErrors = {};
 
@@ -36,18 +34,14 @@ const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // For fees field, remove non-numeric characters except decimal point
     if (name === "fees") {
-      // Allow only numbers and one decimal point
       const filteredValue = value.replace(/[^\d.]/g, "");
-      // Ensure only one decimal point
       const parts = filteredValue.split(".");
       if (parts.length > 2) {
-        return; // Don't update if multiple decimal points
+        return;
       }
 
       setForm((prev) => ({ ...prev, [name]: filteredValue }));
@@ -55,23 +49,19 @@ const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
 
-    // Clear error for this field
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
 
-    // Clear success message when form is edited
     if (success) {
       setSuccess(false);
     }
 
-    // Clear error message
     if (errorMessage) {
       setErrorMessage("");
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -89,7 +79,6 @@ const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
         fees: Number(form.fees),
       };
 
-      // Try multiple possible endpoints
       const endpoints = [
         `${apiBase}/api/classes/add`,
         `${apiBase}/api/classes/create`,
@@ -116,7 +105,6 @@ const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
             break;
           }
         } catch (err) {
-          // Try next endpoint
           continue;
         }
       }
@@ -124,14 +112,12 @@ const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
       if (success) {
         setSuccess(true);
 
-        // Reset form
         setForm({
           className: "",
           fees: "",
         });
         setErrors({});
 
-        // Navigate to class list after 1.5 seconds
         setTimeout(() => {
           navigate("/admindashboard/view-classes");
         }, 1500);
@@ -148,7 +134,6 @@ const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
     }
   };
 
-  // Handle form reset
   const handleReset = () => {
     if (window.confirm("Are you sure you want to reset the form?")) {
       setForm({
@@ -161,7 +146,6 @@ const AdminAddClass = ({ apiBase = "http://localhost:8080" }) => {
     }
   };
 
-  // Handle back navigation
   const handleBack = () => {
     if (
       (form.className || form.fees) &&

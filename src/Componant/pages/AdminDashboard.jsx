@@ -13,7 +13,6 @@ import {
 
 import "./AdminDashboard.css";
 
-// Pages (adjust imports if your files live in different folders)
 import AdminStudentRegistration from "./AdminStudentRegistration";
 import ViewStudents from "./AdminViewStudents";
 import AdminTeacherRegistration from "./AdminTeacherRegistration";
@@ -33,15 +32,15 @@ import AdminNotice from "./AdminNotice";
 import AdminViewClassStudents from "./AdminViewClassStudents";
 import AdminStudentFeeDetails from "./AdminStudentFeeDetails";
 
-// Session context/provider (make sure this file exists and exports SessionProvider & SessionContext)
 import { SessionProvider, SessionContext } from "./SessionContext";
 import { useContext } from "react";
 import AdminStudentIdClass from "./AdminStudentIdClass";
 import AdminPrintIdCard from "./AdminPrintIdCard";
 import AdminIdCardPrint from "./AdminIdCardPrint";
 import AdminIdCardPrintAll from "./AdminIdCardPrintAll";
+import AdminAdmitCardPrint from "./AdminAdmitCardPrint";
+import AdminAdmitCardPrintAll from "./AdminAdmitCardPrintAll";
 
-/* SessionSelect component (uses SessionContext) */
 const SessionSelect = () => {
   const { sessions, selectedSession, setSelectedSession, reloadSessions } =
     useContext(SessionContext);
@@ -176,8 +175,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-page">
-      {/* SessionProvider wraps the dashboard so SessionSelect can read/update sessions.
-          But NOTE: SessionSelect is rendered only inside the index route below. */}
       <SessionProvider apiBase="http://localhost:8080">
         <Sidebar />
 
@@ -230,8 +227,14 @@ const AdminDashboard = () => {
               path="/generate-id-cards/print"
               element={<AdminIdCardPrint />}
             />
-
-            {/* <Route path="/generate-admit-cards" element={<AdmitCard />} /> */}
+            <Route
+              path="/generate-admit-card"
+              element={<AdminAdmitCardPrint />}
+            />
+            <Route
+              path="/admindashboard/generate-admit-card/print-all"
+              element={<AdminAdmitCardPrintAll />}
+            />
 
             <Route
               path="view-class-student"
@@ -242,7 +245,6 @@ const AdminDashboard = () => {
               element={<AdminIdCardPrintAll />}
             />
 
-            {/* ------------------ INDEX ROUTE: show Session selector HERE only ------------------ */}
             <Route
               path=""
               element={

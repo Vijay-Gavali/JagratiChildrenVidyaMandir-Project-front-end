@@ -1,4 +1,3 @@
-/* AdminAddClass.css */
 .add-class-container {
     padding: 24px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
@@ -221,7 +220,6 @@
     gap: 10px;
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
     .add-class-container {
         padding: 16px;
