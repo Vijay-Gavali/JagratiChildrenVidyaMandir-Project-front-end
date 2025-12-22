@@ -40,6 +40,10 @@ import AdminIdCardPrint from "./AdminIdCardPrint";
 import AdminIdCardPrintAll from "./AdminIdCardPrintAll";
 import AdminAdmitCardPrint from "./AdminAdmitCardPrint";
 import AdminAdmitCardPrintAll from "./AdminAdmitCardPrintAll";
+import AdminTeacherDocumentUpload from "./AdminTeacherDocumentUpload";
+import AdminTeacherRegistrationReceipt from "./AdminTeacherRegistrationReceipt";
+import AdminViewTeacherDetails from "./AdminViewTeacherDetails";
+import AdminUpdateTeacher from "./AdminUpdateTeacher";
 
 const SessionSelect = () => {
   const { sessions, selectedSession, setSelectedSession, reloadSessions } =
@@ -208,6 +212,19 @@ const AdminDashboard = () => {
               path="upload-docs"
               element={<AdminUploadStudentDocuments />}
             />
+            <Route
+              path="teacher-documents"
+              element={<AdminTeacherDocumentUpload />}
+            />
+            <Route
+              path="teacher-receipt"
+              element={<AdminTeacherRegistrationReceipt />}
+            />
+            <Route
+              path="view-teacher-details"
+              element={<AdminViewTeacherDetails />}
+            />
+            <Route path="update-teacher" element={<AdminUpdateTeacher />} />
             <Route
               path="print-student"
               element={<AdminPrintStudentDetails />}
