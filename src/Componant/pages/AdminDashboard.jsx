@@ -44,6 +44,8 @@ import AdminTeacherDocumentUpload from "./AdminTeacherDocumentUpload";
 import AdminTeacherRegistrationReceipt from "./AdminTeacherRegistrationReceipt";
 import AdminViewTeacherDetails from "./AdminViewTeacherDetails";
 import AdminUpdateTeacher from "./AdminUpdateTeacher";
+import TransactionReport from "./TransactionReport";
+import StudentExcelExport from "./StudentExcelExport";
 
 const SessionSelect = () => {
   const { sessions, selectedSession, setSelectedSession, reloadSessions } =
@@ -142,8 +144,18 @@ const Sidebar = () => {
         <NavLink to="/admindashboard/notice" className={navClass}>
           <FaClipboardList /> <span>Notice Board</span>
         </NavLink>
+
         <NavLink to="/admindashboard/generate-id-cards" className={navClass}>
           <FaIdCard /> <span>Generate ID Card</span>
+        </NavLink>
+
+        <NavLink
+          to="/admindashboard/students/export-excel"
+          className={({ isActive }) =>
+            isActive ? "nav-item active" : "nav-item"
+          }
+        >
+          <FaFileUpload /> <span>Export Student Excel</span>
         </NavLink>
       </nav>
 
@@ -261,7 +273,11 @@ const AdminDashboard = () => {
               path="generate-id-cards/print-all"
               element={<AdminIdCardPrintAll />}
             />
-
+            <Route path="transactions" element={<TransactionReport />} />
+            <Route
+              path="students/export-excel"
+              element={<StudentExcelExport />}
+            />
             <Route
               path=""
               element={
